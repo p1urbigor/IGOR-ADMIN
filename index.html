@@ -873,7 +873,23 @@ document.addEventListener('click',e=>{
 });
 
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;if(b.dataset.nav){go(b.dataset.nav);return;}if(b.dataset.mode){setMode(b.dataset.mode);return;}if(b.dataset.example){setMode(b.dataset.example);$('#query').value={plate:'PBA1234',email:'stalin@ejemplo.com',document:'1712345678'}[mode];doSearch();return;}if(b.dataset.select){selectAccount(b.dataset.select);return;}if(b.dataset.dataTab){dataTab=b.dataset.dataTab;renderView();return;}if(b.dataset.walletTab){walletTab=b.dataset.walletTab;renderView();return;}if(b.dataset.moveTab){moveTab=b.dataset.moveTab;renderView();return;}const action=b.dataset.action,id=b.dataset.id,a=current();if(!action)return;if(action.startsWith('go-')){go(action.slice(3));return;}switch(action){case'close':closeModal();break;case'help':help();break;case'cash':cashForm();break;case'edit-personal':editPersonal();break;case'edit-billing':editPersonal(true);break;case'card':cardFlow(id);break;case'recurring':recurring();break;case'media-add':mediaForm();break;case'media-edit':mediaForm(id);break;case'ticket-search':ticketSearch();break;case'ticket-detail':ticketDetail(id);break;case'move-detail':moveDetail(id);break;case'discount':discount(id);break;
-case'media-remove':if(activeAllowed()){const m=a.media.find(x=>x.id===id);if(!m)return;if(m.type==='Código QR'){showToast('Los códigos QR no se pueden eliminar.');break;}confirmChange('Quitar medio de esta cuenta',`<p>Se quitará <b>${esc(m.code)}</b> de ${esc(a.name)}. Las otras cuentas conservarán sus registros.</p>`,note=>{a.media=a.media.filter(x=>x.id!==id);audit('Medio retirado',m.code+' · '+note);closeModal();refresh();showToast('Medio retirado únicamente de esta cuenta.');},{reason:true,label:'Quitar de esta cuenta',danger:true});}break;
+case'media-remove':if(activeAllowed()){
+ const m=a.media.find(x=>x.id===id);if(!m)return;
+ if(m.type==='Código QR'){showToast('Los códigos QR no se pueden eliminar.');break;}
+ const isVehicle=m.type==='Vehículo';
+ confirmChange('Quitar medio de esta cuenta',`<p>Se quitará <b>${esc(m.code)}</b> de ${esc(a.name)}. Las otras cuentas conservarán sus registros.</p>`,note=>{
+  a.media=a.media.filter(x=>x.id!==id);
+  audit('Medio retirado',m.code+(note?' · '+note:''));
+  closeModal();refresh();showToast('Medio retirado únicamente de esta cuenta.');
+ },{reason:!isVehicle,label:'Quitar de esta cuenta',danger:true});
+ if(isVehicle){
+  const form=$('#confirmForm'),check=form.querySelector('input[type="checkbox"]'),submit=form.querySelector('button[type="submit"]');
+  submit.disabled=!check.checked;
+  check.addEventListener('change',()=>{submit.disabled=!check.checked;});
+  const onSubmit=form.onsubmit;
+  form.onsubmit=e=>{if(!check.checked){e.preventDefault();check.focus();return;}onSubmit(e);};
+ }
+}break;
 case'remove-card':removeRegisteredCard(id);break;
 case'remove-admin':removeAdmin(id);break;
 case'ticket-link':if(activeAllowed()){const t=physicalTickets.find(x=>x.id===id);confirmChange('Vincular ticket físico',`<div class="summary-lines"><div><span>Ticket</span><b>${t.id}</b></div><div><span>Placa</span><b>${t.plate}</b></div><div><span>Cuenta destino</span><b>${a.id}</b></div></div>`,()=>{if(accounts.some(x=>x.tickets.some(y=>y.physicalId===id)))return;a.tickets.push({...t,physicalId:t.id,id:'VT-'+t.id});audit('Ticket vinculado',id);closeModal();refresh();showToast('Ticket vinculado como virtual en esta cuenta.');});}break;
