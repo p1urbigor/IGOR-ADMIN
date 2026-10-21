@@ -232,10 +232,26 @@ const baseAccounts=[
  {id:'IG-4050',name:'Movilidad Empresa Demo',holder:'Empresa Demo S.A.',document:'1790000000001',docType:'RUC',email:'movilidad@ejemplo.com',phone:'022345678',city:'Quito',province:'Pichincha',country:'Ecuador',address:'Av. 6 de Diciembre 100',state:'Activa',kind:'Empresa',balance:12000,recurring:5000,plates:['PBA1234','GBA2020'],cards:[{id:'C2',brand:'Mastercard',last:'5678',expiry:'04/2026',state:'Expirada',primary:true}],tickets:[]}
 ];
 const accounts=baseAccounts.map((a,i)=>({...a,billing:{name:a.holder,document:a.document,type:a.docType,email:a.email,address:a.address},media:[...a.plates.map((p,j)=>({id:`V${i}${j}`,type:'Vehículo',code:p,brand:j?'Chevrolet':'Toyota',model:j?'Onix':'Corolla',color:j?'Blanco':'Gris',ocr:true})),{id:`Q${i}`,type:'Código QR',code:`9000${i+1}`}],moves:i===0?[{id:'MV-103',date:'25/09/2026 09:40',type:'Servicio',concept:'Parqueadero · El Bosque',method:'Billetera',amount:-350,balance:4325,plate:'PBA1234',entry:'25/09/2026 08:10',exit:'25/09/2026 09:40',duration:'1 h 30 min',note:''},{id:'MV-102',date:'24/09/2026 19:21',type:'Billetera',concept:'Recarga con tarjeta',method:'Visa •••• 1234',amount:2500,balance:4675,plate:'—',authorization:'594795',batch:'1348520',bank:'Aprobada'},{id:'MV-101',date:'23/09/2026 16:20',type:'Servicio',concept:'Lavado de vehículo',method:'Pago directo con tarjeta',amount:-800,balance:null,plate:'PBA1234',note:'No descontó saldo de la billetera.'}]:[],invoices:[],audit:[]}));
+// Coherent local fixtures. Re-running this migration never reverses a card twice.
+function initializeAccessMediaFixtures(){
+ const enabledDemoPlates=new Set();
+ for(const account of accounts)for(const medium of account.media){
+  if(medium.type==='Tarjeta Mifare / NFC'){
+   const inputCode=mifareInputCode(medium);
+   Object.assign(medium,{inputCode,code:reverseMifarePairs(inputCode),codeEncoding:'hex-byte-reversed'});
+  }
+  if(medium.type!=='Vehículo'||!medium.ocr)continue;
+  const plate=normalizePlate(medium.code);
+  if(enabledDemoPlates.has(plate))medium.ocr=false;else enabledDemoPlates.add(plate);
+ }
+}
+initializeAccessMediaFixtures();
 Object.assign(accounts[0].moves.find(m=>m.id==='MV-103'),{parkingId:'PK-EL-BOSQUE',parkingName:'El Bosque',zoneId:'ZN-EL-BOSQUE-01',zoneName:'El Bosque',consumedAt:'2026-09-25T09:40:00-05:00'});
 accounts[0].moves.unshift({id:'MV-DEMO-ACTUAL',date:now(),consumedAt:new Date().toISOString(),type:'Servicio',concept:'Parqueadero · El Bosque · ejemplo actual',method:'Billetera',amount:-350,balance:accounts[0].balance,parkingId:'PK-EL-BOSQUE',parkingName:'El Bosque',zoneId:'ZN-EL-BOSQUE-01',zoneName:'El Bosque',note:'Consumo ficticio para probar validaciones; ya incluido en el saldo inicial de ejemplo.'});
 accounts[0].moves.unshift({id:'MV-DEMO-QUICENTRO',date:now(),consumedAt:new Date().toISOString(),type:'Servicio',concept:'Parqueadero · Quicentro Sur · ejemplo actual',method:'Billetera',amount:-500,balance:accounts[0].balance,parkingId:'PK-QUICENTRO-SUR',parkingName:'Quicentro Sur',zoneId:'ZN-QUICENTRO-SUR-01',zoneName:'Quicentro Sur',note:'Consumo ficticio para probar su catálogo propio; ya incluido en el saldo inicial de ejemplo.'});
-accounts[0].invoices=[{id:'DEMO-F001',date:'24/09/2026',concept:'Recarga con tarjeta',total:2500}];
+accounts[0].invoices=[{id:'DEMO-F001',codEst:'003',ptoEmision:'011',secuencial:44,date:'24/09/2026',tipoRecarga:'manual',invoiceType:'Recarga',concept:'Recarga Manual',total:2500}];
+// Numeración ficticia del mockup; no consulta ni reserva secuenciales en BAP.
+const invoiceDemoSeries=Object.freeze({codEst:'003',ptoEmision:'011'});
 
 accounts.forEach(a=>{
   Object.assign(a.billing,{phone:a.phone,city:a.city,province:a.province,country:a.country});
@@ -330,7 +346,7 @@ function processAutoRechargeEvent(account,eventId,outcome='approved'){
  const approved=!!card&&valid&&outcome==='approved';
  const reason=!card?'Falta una tarjeta predeterminada elegible.':!valid?'El monto configurado no cumple el mínimo de CONFIG.':!approved?'El pago simulado fue rechazado.':'';
  const id='AR-'+(++sequence),date=now();
- if(card&&valid){const record={id,date,amount,fee:0,total:amount,method:card.brand+' •••• '+card.last,state:approved?'Aprobada':'Rechazada',reference:'DEMO-'+id,eventId};account.recharges.unshift(record);if(approved){account.balance+=amount;account.moves.unshift({...record,type:'Billetera',concept:'Autorrecarga automática',balance:account.balance,authorization:'DEMO-'+id,bank:'Aprobada (demo)',note:'Umbral CONFIG tras '+eventId});}}
+ if(card&&valid){const record={id,date,amount,tipoRecarga:'automatica',fee:0,total:amount,method:card.brand+' •••• '+card.last,state:approved?'Aprobada':'Rechazada',reference:'DEMO-'+id,eventId};account.recharges.unshift(record);if(approved){account.balance+=amount;account.moves.unshift({...record,type:'Billetera',concept:'Autorrecarga automática',balance:account.balance,authorization:'DEMO-'+id,bank:'Aprobada (demo)',note:'Umbral CONFIG tras '+eventId});createRechargeInvoices(account,record);}}
  account.audit.unshift({date,action:approved?'Autorrecarga automática aprobada':'Autorrecarga automática no completada',detail:eventId+' · '+money(amount)+' · '+(reason||'Pago simulado aprobado; sin cobro real'),operator:loggedInAdmin.name,account:account.id});
  return {accountId:account.id,accountName:account.name,before,amount,after:account.balance,approved,reason,eventId};
 }
@@ -464,12 +480,20 @@ function renderMoves(){
  return `<div class="section-head"><div><h1>Movimientos</h1><p>Pagos, devoluciones, recargas y transferencias de la billetera.</p></div>${btn(ico('download')+' Descargar listado',promos?'export-promos':'export-moves')}</div><div class="subtabs">${[['all','Todos'],['consumptions','Consumos y devoluciones'],['promos','Historial de Códigos Promocionales']].map(([k,l])=>`<button data-move-tab="${k}" class="${moveTab===k?'active':''}" aria-pressed="${moveTab===k}">${l}</button>`).join('')}</div>${promos?renderPromoHistory():`<div class="notice" style="margin-bottom:20px">${ico('info')}<span>Abre el detalle de cada consumo para consultar la estadía. Si tiene validación, se muestran también sus datos. Observaciones incluye únicamente el nombre del responsable de la validación. El pago original no se borra. Cada descuento y devolución aparece por separado, con el importe que vuelve al saldo.</span></div><details class="panel pad" style="margin-bottom:20px"><summary style="cursor:pointer;font-weight:700">Ejemplos de las capturas: sin validación y con validación</summary><p class="small muted" style="margin-top:10px">Referencias de demostración. No pertenecen al historial de esta cuenta, no se exportan y no cambian su saldo. Los ejemplos contienen todos los datos de consumo y validación de las capturas.</p><div class="form-actions" style="margin-top:12px">${btn('Ver consumo sin validación','move-detail','',`data-id="REF-CONSUMO-SIN-VALIDACION"`)}${btn('Ver consumo con validación','move-detail','',`data-id="REF-CONSUMO-VALIDADO"`)}</div></details>${movesTable(visibleMoves)}`}`;
 }
 function renderTickets(){const a=current();return `<div class="section-head"><div><h1>Tickets en curso</h1><p>Entradas sin salida registradas en esta cuenta.</p></div>${btn(ico('link')+' Vincular ticket físico','ticket-search','primary')}</div>${a.tickets.length?`<div class="table-wrap"><table><thead><tr><th>Ticket</th><th>Parqueadero</th><th>Entrada</th><th>Vehículo</th><th>Acción</th></tr></thead><tbody>${a.tickets.map(t=>`<tr><td><strong>${esc(t.id)}</strong><small>Virtual · En curso</small></td><td>${esc(t.zone)}<small>${esc(t.equipment)}</small></td><td>${esc(t.date)}</td><td><span class="plate">${esc(t.plate)}</span></td><td>${btn('Revisar ticket','ticket-detail','',`data-id="${t.id}"`)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="panel empty">'+ico('ticket')+'<h2>No hay tickets en curso</h2><p>Si el cliente tiene un ticket físico, puedes buscarlo para vincularlo.</p></div>'}`;}
-function renderMedia(){const a=current();return `<div class="section-head"><div><h1>Medios de acceso</h1><p>Medios registrados únicamente en ${esc(a.name)}.</p></div>${btn(ico('plus')+' Añadir medio','media-add','primary')}</div><div class="notice" style="margin-bottom:20px">${ico('info')}<span>Una placa puede estar en varias cuentas. El sistema detecta automáticamente si es normal o diplomática. Los códigos QR no se pueden eliminar.</span></div><div class="media-list">${a.media.map(m=>`<article class="panel pad medium"><div class="vehicle-info"><span class="task-icon">${ico(m.type==='Vehículo'?'car':m.type==='Código QR'?'grid':'card')}</span><div><h3>${esc(m.type)}</h3><span class="${m.type==='Vehículo'?'plate':'small'}">${esc(m.code)}</span></div></div>${m.type==='Vehículo'?`<p class="small muted">${esc(m.brand)} ${esc(m.model)} · ${esc(m.color)}</p><p class="small" style="margin-top:8px">${m.plateKind?`Placa ${esc(m.plateKind.toLowerCase())} · `:''}Apertura por placa: <b>${m.ocr?'Activada':'Desactivada'}</b></p>`:'<p class="small muted">Permite identificar esta cuenta en el acceso.</p>'}<div class="bottom">${m.type==='Vehículo'?btn('Editar','media-edit','',`data-id="${m.id}"`):'<span class="badge green">Registrado</span>'}${m.type==='Código QR'?'<span class="badge">No eliminable</span>':btn('Quitar de esta cuenta','media-remove','text',`data-id="${m.id}"`)}</div></article>`).join('')}</div>`;}
-function invoiceValues(account,invoice){const total=invoice.total||0,net=invoice.net??Math.round(total*100/115),iva=invoice.iva??total-net;return {number:invoice.id,name:invoice.billingName||account.billing.name,date:invoice.date,concept:invoice.concept,net,iva,total};}
-function renderInvoices(){const a=current();return `<div class="section-head"><div><h1>Historial Facturas</h1><p>Comprobantes de la cuenta seleccionada.</p></div></div><div class="notice" style="margin-bottom:20px">${ico('info')}<span>Facturas simuladas sin validez tributaria. Neto e IVA usan el desglose ilustrativo del prototipo (15%).</span></div>${a.invoices.length?`<div class="table-wrap"><table><thead><tr><th>Número</th><th>Razón social</th><th>Fecha</th><th>Concepto</th><th>Neto</th><th>IVA</th><th>Total</th><th>Acción</th></tr></thead><tbody>${a.invoices.map(f=>{const v=invoiceValues(a,f);return `<tr><td>${esc(v.number)}</td><td>${esc(v.name)}</td><td>${esc(v.date)}</td><td>${esc(v.concept)}</td><td>${money(v.net)}</td><td>${money(v.iva)}</td><td>${money(v.total)}</td><td>${btn('Ver detalle','invoice','',`data-id="${esc(f.id)}"`)} ${btn('Descargar PDF','invoice-pdf','',`data-id="${esc(f.id)}"`)}</td></tr>`;}).join('')}</tbody></table></div>`:'<div class="panel empty"><h2>No hay facturas registradas</h2></div>'}`;}
-function invoiceDetail(id){const a=current(),f=a?.invoices.find(item=>item.id===id);if(!f)return;const v=invoiceValues(a,f);modal('Factura simulada',`<p class="notice warning">Documento ilustrativo, sin validez tributaria.</p>${dataValues([['Número',v.number],['Razón social',v.name],['Fecha',v.date],['Concepto',v.concept],['Neto',money(v.net)],['IVA (15% ilustrativo)',money(v.iva)],['Total',money(v.total)]])}<div class="form-actions">${btn('Descargar PDF','invoice-pdf','primary',`data-id="${esc(id)}"`)}${btn('Cerrar','close')}</div>`);}
-function buildInvoicePdf(account,invoice){const v=invoiceValues(account,invoice);const text=[['IGOR - FACTURA SIMULADA'],['Sin validez tributaria. No representa una transaccion real.'],[''],['Numero: '+v.number],['Razon social: '+v.name],['Cuenta: '+account.id],['Fecha: '+v.date],['Concepto: '+v.concept],[''],['Neto: '+money(v.net)],['IVA (15% ilustrativo): '+money(v.iva)],['Total: '+money(v.total)]];const lines=text.flatMap(([line])=>{const normalized=String(line).replace(/[\r\n\t]+/g,' ');return normalized.match(/.{1,78}(?:\s|$)|.{1,78}/g)||[''];});const literal=str=>'('+Array.from(str).map(ch=>{const n=ch.codePointAt(0);if(n>=32&&n<=126)return /[()\\]/.test(ch)?'\\'+ch:ch;if(n>=160&&n<=255)return '\\'+n.toString(8).padStart(3,'0');return '?';}).join('')+')';const pages=[];for(let i=0;i<lines.length;i+=40)pages.push(lines.slice(i,i+40));const objects=['<< /Type /Catalog /Pages 2 0 R >>','', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'];const ids=[];for(const page of pages){const id=objects.length+1;ids.push(id);const stream='BT /F1 11 Tf 16 TL 50 785 Td\n'+page.map((line,i)=>(i?'T* ':'')+literal(line)+' Tj').join('\n')+'\nET';objects.push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents '+(id+1)+' 0 R >>','<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream');}objects[1]='<< /Type /Pages /Kids ['+ids.map(id=>id+' 0 R').join(' ')+'] /Count '+ids.length+' >>';let pdf='%PDF-1.4\n',offsets=[0];objects.forEach((obj,i)=>{offsets.push(pdf.length);pdf+=(i+1)+' 0 obj\n'+obj+'\nendobj\n';});const xref=pdf.length;pdf+='xref\n0 '+(objects.length+1)+'\n0000000000 65535 f \n'+offsets.slice(1).map(offset=>String(offset).padStart(10,'0')+' 00000 n \n').join('')+'trailer\n<< /Size '+(objects.length+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';return pdf;}
-function downloadInvoicePdf(id){const a=current(),f=a?.invoices.find(item=>item.id===id);if(!f)return;download(buildInvoicePdf(a,f),String(f.id).replace(/[^a-zA-Z0-9_-]/g,'_')+'_simulada.pdf','application/pdf');}
+function renderMedia(){const a=current();return `<div class="section-head"><div><h1>Medios de acceso</h1><p>Medios registrados únicamente en ${esc(a.name)}.</p></div>${btn(ico('plus')+' Añadir medio','media-add','primary',a.state!=='Activa'?'disabled':'')}</div><div class="notice" style="margin-bottom:20px">${ico('info')}<span>Una placa puede estar en varias cuentas, pero la lectura de matrícula solo puede estar activada en una de ellas. El sistema detecta automáticamente si es normal o diplomática. Cada cuenta tiene un único código QR, solo para consulta. No se puede agregar, editar ni eliminar.</span></div><div class="media-list">${a.media.map(m=>`<article class="panel pad medium"><div class="vehicle-info"><span class="task-icon">${ico(m.type==='Vehículo'?'car':m.type==='Código QR'?'grid':'card')}</span><div><h3>${esc(m.type)}</h3><span class="${m.type==='Vehículo'?'plate':'small'}">${esc(accessMediaDisplayCode(m))}</span></div></div>${m.type==='Vehículo'?`<p class="small muted">${esc(m.brand)} ${esc(m.model)} · ${esc(m.color)}</p><p class="small" style="margin-top:8px">${m.plateKind?`Placa ${esc(m.plateKind.toLowerCase())} · `:''}Apertura por placa: <b>${m.ocr?'Activada':'Desactivada'}</b></p>`:'<p class="small muted">Permite identificar esta cuenta en el acceso.</p>'}<div class="bottom">${m.type==='Vehículo'?btn('Editar','media-edit','',`data-id="${m.id}" ${a.state!=='Activa'?'disabled':''}`):'<span class="badge green">Registrado</span>'}${m.type==='Código QR'?'<span class="badge">No eliminable · Único por cuenta · Solo consulta</span>':btn('Quitar de esta cuenta','media-remove','text',`data-id="${m.id}" ${a.state!=='Activa'?'disabled':''}`)}</div></article>`).join('')}</div>`;}
+function formatInvoiceNumber(invoice){
+ const part=(value,width)=>{const text=String(value??'');if(!/^\d+$/.test(text)||text.length>width)throw new TypeError('Componente de factura inválido');return text.padStart(width,'0');};
+ return [part(invoice.codEst,3),part(invoice.ptoEmision,3),part(invoice.secuencial,9)].join('-');
+}
+function invoiceDescription(invoice){
+ if(!['manual','automatica'].includes(invoice.tipoRecarga)||!['Recarga','Servicio'].includes(invoice.invoiceType))throw new TypeError('Clasificación de factura inválida');
+ return 'Recarga '+(invoice.tipoRecarga==='automatica'?'Automática':'Manual')+(invoice.invoiceType==='Servicio'?' Servicio':'');
+}
+function invoiceValues(account,invoice){const total=invoice.total||0,net=invoice.net??Math.round(total*100/115),iva=invoice.iva??total-net;return {number:formatInvoiceNumber(invoice),name:invoice.billingName||account.billing.name,date:invoice.date,concept:invoiceDescription(invoice),net,iva,total};}
+function renderInvoices(){const a=current();return `<div class="section-head"><div><h1>Historial Facturas</h1><p>Comprobantes de la cuenta seleccionada.</p></div></div><div class="notice" style="margin-bottom:20px">${ico('info')}<span>Facturas simuladas sin validez tributaria. Neto e IVA usan el desglose ilustrativo del prototipo (15%).</span></div>${a.invoices.length?`<div class="table-wrap"><table><thead><tr><th>Factura #</th><th>Razón social</th><th>Fecha</th><th>Descripción</th><th>Neto</th><th>IVA</th><th>Total</th><th>Acción</th></tr></thead><tbody>${a.invoices.map(f=>{const v=invoiceValues(a,f);return `<tr><td>${esc(v.number)}</td><td>${esc(v.name)}</td><td>${esc(v.date)}</td><td>${esc(v.concept)}</td><td>${money(v.net)}</td><td>${money(v.iva)}</td><td>${money(v.total)}</td><td>${btn('Ver detalle','invoice','',`data-id="${esc(f.id)}"`)} ${btn('Descargar PDF','invoice-pdf','',`data-id="${esc(f.id)}"`)}</td></tr>`;}).join('')}</tbody></table></div>`:'<div class="panel empty"><h2>No hay facturas registradas</h2></div>'}`;}
+function invoiceDetail(id){const a=current(),f=a?.invoices.find(item=>item.id===id);if(!f)return;const v=invoiceValues(a,f);modal('Factura simulada',`<p class="notice warning">Documento ilustrativo, sin validez tributaria.</p>${dataValues([['Factura #',v.number],['Razón social',v.name],['Fecha',v.date],['Descripción',v.concept],['Neto',money(v.net)],['IVA (15% ilustrativo)',money(v.iva)],['Total',money(v.total)]])}<div class="form-actions">${btn('Descargar PDF','invoice-pdf','primary',`data-id="${esc(id)}"`)}${btn('Cerrar','close')}</div>`);}
+function buildInvoicePdf(account,invoice){const v=invoiceValues(account,invoice);const text=[['IGOR - FACTURA SIMULADA'],['Sin validez tributaria. No representa una transaccion real.'],[''],['Factura #: '+v.number],['Razon social: '+v.name],['Cuenta: '+account.id],['Fecha: '+v.date],['Descripcion: '+v.concept],[''],['Neto: '+money(v.net)],['IVA (15% ilustrativo): '+money(v.iva)],['Total: '+money(v.total)]];const lines=text.flatMap(([line])=>{const normalized=String(line).replace(/[\r\n\t]+/g,' ');return normalized.match(/.{1,78}(?:\s|$)|.{1,78}/g)||[''];});const literal=str=>'('+Array.from(str).map(ch=>{const n=ch.codePointAt(0);if(n>=32&&n<=126)return /[()\\]/.test(ch)?'\\'+ch:ch;if(n>=160&&n<=255)return '\\'+n.toString(8).padStart(3,'0');return '?';}).join('')+')';const pages=[];for(let i=0;i<lines.length;i+=40)pages.push(lines.slice(i,i+40));const objects=['<< /Type /Catalog /Pages 2 0 R >>','', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'];const ids=[];for(const page of pages){const id=objects.length+1;ids.push(id);const stream='BT /F1 11 Tf 16 TL 50 785 Td\n'+page.map((line,i)=>(i?'T* ':'')+literal(line)+' Tj').join('\n')+'\nET';objects.push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents '+(id+1)+' 0 R >>','<< /Length '+stream.length+' >>\nstream\n'+stream+'\nendstream');}objects[1]='<< /Type /Pages /Kids ['+ids.map(id=>id+' 0 R').join(' ')+'] /Count '+ids.length+' >>';let pdf='%PDF-1.4\n',offsets=[0];objects.forEach((obj,i)=>{offsets.push(pdf.length);pdf+=(i+1)+' 0 obj\n'+obj+'\nendobj\n';});const xref=pdf.length;pdf+='xref\n0 '+(objects.length+1)+'\n0000000000 65535 f \n'+offsets.slice(1).map(offset=>String(offset).padStart(10,'0')+' 00000 n \n').join('')+'trailer\n<< /Size '+(objects.length+1)+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF';return pdf;}
+function downloadInvoicePdf(id){const a=current(),f=a?.invoices.find(item=>item.id===id);if(!f)return;download(buildInvoicePdf(a,f),formatInvoiceNumber(f)+'_simulada.pdf','application/pdf');}
 
 function renderSettings(){
  const a=current();
@@ -582,7 +606,7 @@ function cashForm(){
  if(a.balance!==draft.before){cashForm();return;}
  a.balance+=draft.amount;const id='EF-'+(++sequence),date=now();
  a.moves.unshift({id,date,type:'Billetera',concept:'Recarga en efectivo',method:'Efectivo',amount:draft.amount,fee:draft.fee,total:draft.total,balance:a.balance,reference:draft.reference,authorization:'Registro de soporte',bank:'Aplicada (demo)'});
- a.recharges.unshift({id,date,amount:draft.amount,fee:draft.fee,total:draft.total,method:'Efectivo',state:'Aprobada',reference:draft.reference});createRechargeInvoices(a,{id,date,amount:draft.amount,fee:draft.fee,total:draft.total,method:'Efectivo'});
+ a.recharges.unshift({id,date,amount:draft.amount,fee:draft.fee,total:draft.total,method:'Efectivo',state:'Aprobada',reference:draft.reference});createRechargeInvoices(a,{id,date,amount:draft.amount,fee:draft.fee,total:draft.total,method:'Efectivo',tipoRecarga:'manual'});
  audit('Recarga en efectivo',id);cashDraft=null;refresh();
  modal('Recarga registrada',`<div class="success-title"><div class="receipt-icon">${ico('check')}</div><h2>Nuevo saldo: ${money(a.balance)}</h2><p class="muted small">Operación de demostración.</p></div><div class="summary-lines"><div><span>Cuenta</span><b>${a.id} · ${esc(a.name)}</b></div><div><span>Constancia</span><b>${id}</b></div><div><span>Recarga acreditada</span><b>${money(draft.amount)}</b></div><div><span>Comisión</span><b>${money(draft.fee)}</b></div><div><span>Total recibido</span><b>${money(draft.total)}</b></div></div><div class="form-actions">${btn(ico('download')+' Descargar constancia','receipt','',`data-id="${id}"`)}${btn('Finalizar','close','primary')}</div>`);
  },{label:'Confirmar recarga'});};
@@ -647,42 +671,104 @@ async function lookupVehicleByPlate(plate){
  await new Promise(resolve=>setTimeout(resolve,600));
  return vehicleExamples[plate]||null;
 }
+function normalizeAccessCode(type,value){return type==='Vehículo'?normalizePlate(value):String(value??'').trim().toUpperCase();}
+function normalizeMifareHex(value){
+ const code=String(value??'').trim().toUpperCase();
+ if(!/^(?:[0-9A-F]{2}){1,4}$/.test(code))throw new TypeError('Ingresa 2, 4, 6 u 8 caracteres hexadecimales (0-9 y A-F), sin espacios interiores ni guiones.');
+ return code;
+}
+function reverseMifarePairs(value){return normalizeMifareHex(value).match(/../g).reverse().join('');}
+function mifareInputCode(medium){
+ if(medium.codeEncoding==='hex-byte-reversed'){
+  const decoded=reverseMifarePairs(medium.code);
+  if(medium.inputCode!==undefined&&normalizeMifareHex(medium.inputCode)!==decoded)throw new TypeError('El código leído no coincide con el código guardado de esta tarjeta.');
+  return decoded;
+ }
+ if(medium.codeEncoding)throw new TypeError('La codificación de la tarjeta no es compatible.');
+ return normalizeMifareHex(medium.code);
+}
+function accessMediaDisplayCode(medium){return medium.type==='Tarjeta Mifare / NFC'?mifareInputCode(medium):medium.code;}
+function mifareCardConflict(inputCode,exceptMedium){
+ const stored=reverseMifarePairs(inputCode);
+ return accounts.find(account=>account.media.some(medium=>medium!==exceptMedium&&medium.type==='Tarjeta Mifare / NFC'&&reverseMifarePairs(mifareInputCode(medium))===stored))||null;
+}
+function plateReadingConflict(account,plate){
+ const normalized=normalizePlate(plate);
+ return accounts.find(other=>other!==account&&other.media.some(medium=>medium.type==='Vehículo'&&medium.ocr===true&&normalizePlate(medium.code)===normalized))||null;
+}
+function validateMediaFields(form){
+ if(!form.reportValidity())return false;
+ for(const el of form.querySelectorAll('[required]')){
+  if(el.disabled||el.type==='checkbox'||el.value.trim())continue;
+  el.setCustomValidity('Completa este campo.');el.reportValidity();el.addEventListener('input',()=>el.setCustomValidity(''),{once:true});return false;
+ }
+ return true;
+}
 function mediaForm(id){
  if(!activeAllowed())return;const a=current(),m=a.media.find(x=>x.id===id);
+ if(id&&!m)return;
+ if(m?.type==='Código QR'){showToast('El código QR es único por cuenta y solo se puede consultar.');return;}
+ if(m&&m.type!=='Vehículo'){showToast('Las tarjetas Mifare / NFC no se editan. Puedes retirarlas de esta cuenta indicando el motivo.');return;}
+ const originalType=m?.type,originalSnapshot=m?JSON.stringify(m):null;let committed=false,cancelled=false;
  modal(m?'Editar vehículo':'Añadir medio',`<form id="mediaForm"><div class="form-grid">
- ${fieldSelect('type','Tipo de medio',m?[m.type]:['Vehículo','Código QR','Tarjeta Mifare / NFC'],m?.type||'Vehículo')}
- <div class="field full"><label id="mediaCodeLabel" for="f-code">Placa del vehículo</label><div class="lookup-control"><input id="f-code" name="code" value="${esc(m?.code||'')}" required maxlength="12" placeholder="ABC0123"><button class="btn primary" type="button" id="lookupPlate" aria-label="Consultar placa" title="Consultar placa">${ico('search')}</button></div><p id="plateHint" class="small muted" style="margin-top:8px">El sistema detecta automáticamente el tipo de placa: normal (3 letras y 4 dígitos) o diplomática (2 letras y 4 dígitos). ABC123 se completa como ABC0123.</p></div>
+ ${fieldSelect('type','Tipo de medio',m?[m.type]:['Vehículo','Tarjeta Mifare / NFC'],m?.type||'Vehículo')}
+ <div class="field full"><label id="mediaCodeLabel" for="f-code">Placa del vehículo</label><div class="lookup-control"><input id="f-code" name="code" value="${esc(m?.code||'')}" required maxlength="12" placeholder="ABC0123"><button class="btn primary" type="button" id="lookupPlate" aria-label="Consultar placa" title="Consultar placa">${ico('search')}</button></div><p id="plateHint" class="small muted" style="margin-top:8px">El sistema detecta automáticamente el tipo de placa: normal (3 letras y 4 dígitos) o diplomática (2 letras y 4 dígitos). ABC123 se completa como ABC0123.</p><p id="mediaCodeHint" class="small muted" hidden>Ingresa el código leído: 2, 4, 6 u 8 caracteres, usando 0-9 y A-F. Esta demostración no lee físicamente la tarjeta.</p></div>
  <div id="plateLookupStatus" class="lookup-message full" role="status">Consulta de ejemplo: prueba ABC123 y pulsa la lupa. La API real aún no está conectada.</div>
  <div id="vehicleFields" class="full form-grid">${input('brand','Marca',m?.brand||'')}${input('model','Modelo',m?.model||'')}${input('color','Color',m?.color||'')}${fieldSelect('ocr','Abrir barrera al reconocer la placa',['Activada','Desactivada'],m?.ocr===false?'Desactivada':'Activada')}</div>
  </div><div class="form-actions">${btn('Cancelar','close')}<button class="btn primary">Revisar medio</button></div></form>`);
- const form=$('#mediaForm'),code=form.elements.code;let lookupVersion=0,lookupFor='';
- const detectPlateKind=value=>{const compact=String(value).toUpperCase().replace(/[\s-]/g,'');if(/^[A-Z]{3}[0-9]{3,4}$/.test(compact))return 'Normal';if(/^[A-Z]{2}[0-9]{4}$/.test(compact))return 'Diplomática';return '';};
- const formatCode=()=>{code.value=form.elements.type.value==='Vehículo'?normalizePlate(code.value):code.value.toUpperCase().replace(/[\s-]/g,'');return code.value;};
+ const form=$('#mediaForm'),dialog=$('#modal'),code=form.elements.code,lookupButton=$('#lookupPlate'),lookupMessage=$('#plateLookupStatus');
+ let lookupVersion=0,detailsPlate=m?.type==='Vehículo'?normalizePlate(m.code):'';
+ const liveForm=()=>!cancelled&&dialog.open&&form.isConnected&&current()===a&&a.state==='Activa';
+ dialog.addEventListener('close',()=>{cancelled=true;lookupVersion++;},{once:true});
+ const detectPlateKind=value=>{if(/^[A-Z]{3}[0-9]{4}$/.test(value))return 'Normal';if(/^[A-Z]{2}[0-9]{4}$/.test(value))return 'Diplomática';return '';};
+ const formatCode=()=>{code.value=normalizeAccessCode(form.elements.type.value,code.value);return code.value;};
  const validPlate=()=>{const value=formatCode(),kind=detectPlateKind(value);code.setCustomValidity(kind?'':'Formato de placa no válido. Normal: 3 letras y 4 dígitos (ABC123 se completa como ABC0123); diplomática: 2 letras y 4 dígitos (CD1234).');$('#plateHint').textContent=kind==='Diplomática'?'Placa diplomática detectada automáticamente: 2 letras y 4 dígitos. Ejemplo: CD1234.':'Placa normal: 3 letras y 4 dígitos. ABC123 se completa como ABC0123.';return code.reportValidity();};
- const clearLookup=()=>{lookupVersion++;code.setCustomValidity('');$('#lookupPlate').disabled=false;if(lookupFor){['brand','model','color'].forEach(k=>form.elements[k].value='');lookupFor='';}};
- code.oninput=()=>{clearLookup();$('#plateLookupStatus').textContent='Placa modificada. Pulsa la lupa para consultar sus datos.';};
- code.onblur=()=>{if(form.elements.type.value==='Vehículo')formatCode();};
- const setType=()=>{clearLookup();const vehicle=form.elements.type.value==='Vehículo';
- $('#vehicleFields').hidden=!vehicle;$('#lookupPlate').hidden=!vehicle;$('#plateLookupStatus').hidden=!vehicle;$('#plateHint').hidden=!vehicle;
- $('#vehicleFields').querySelectorAll('input,select').forEach(x=>x.disabled=!vehicle);
- $('#mediaCodeLabel').textContent=vehicle?'Placa del vehículo':'Código del medio';code.maxLength=vehicle?12:60;code.placeholder=vehicle?'ABC0123':'Código del medio';
+ const invalidateLookup=()=>{lookupVersion++;code.setCustomValidity('');form.elements.ocr.setCustomValidity('');lookupButton.disabled=false;};
+ form.elements.ocr.onchange=()=>form.elements.ocr.setCustomValidity('');
+ const clearVehicleData=()=>{['brand','model','color'].forEach(k=>{form.elements[k].value='';form.elements[k].setCustomValidity('');});detailsPlate='';};
+ code.oninput=()=>{invalidateLookup();if(form.elements.type.value==='Vehículo'&&detailsPlate&&normalizePlate(code.value)!==detailsPlate)clearVehicleData();lookupMessage.textContent='Placa modificada. Pulsa la lupa para consultar sus datos o complétalos manualmente.';};
+ code.onblur=formatCode;
+ ['brand','model','color'].forEach(k=>{form.elements[k].oninput=()=>{form.elements[k].setCustomValidity('');invalidateLookup();detailsPlate=normalizePlate(code.value);lookupMessage.textContent='Datos editados manualmente. Se conservarán al guardar.';};});
+ const setType=()=>{invalidateLookup();const vehicle=form.elements.type.value==='Vehículo';if(vehicle&&detailsPlate&&normalizePlate(code.value)!==detailsPlate)clearVehicleData();
+ $('#vehicleFields').hidden=!vehicle;lookupButton.hidden=!vehicle;lookupMessage.hidden=!vehicle;$('#plateHint').hidden=!vehicle;$('#mediaCodeHint').hidden=vehicle;
+ $('#vehicleFields').querySelectorAll('input,select').forEach(x=>{x.disabled=!vehicle;x.setCustomValidity('');});
+ $('#mediaCodeLabel').textContent=vehicle?'Placa del vehículo':'Código de la tarjeta';if(vehicle)code.maxLength=12;else code.removeAttribute('maxlength');code.placeholder=vehicle?'ABC0123':'A1B2C3D4';
  };
- form.elements.type.onchange=setType;
- setType();
- $('#lookupPlate').onclick=async()=>{
- if(!validPlate())return;const version=++lookupVersion,plate=code.value,button=$('#lookupPlate'),message=$('#plateLookupStatus');
- button.disabled=true;message.textContent='Consultando placa '+plate+'…';
- const record=await lookupVehicleByPlate(plate);
- if(!form.isConnected||version!==lookupVersion)return;button.disabled=false;
- if(!record){message.textContent='No encontramos esta placa en los ejemplos. Puedes completar marca, modelo y color manualmente.';return;}
- ['brand','model','color'].forEach(k=>form.elements[k].value=record[k]);lookupFor=plate;message.textContent='Datos autocompletados para '+plate+' (demostración). Revisa antes de guardar.';
+ form.elements.type.onchange=setType;setType();
+ lookupButton.onclick=async()=>{
+  if(!liveForm()||form.elements.type.value!=='Vehículo'||!validPlate())return;
+  const version=++lookupVersion,plate=code.value;lookupButton.disabled=true;lookupMessage.textContent='Consultando placa '+plate+'…';
+  try{
+   const record=await lookupVehicleByPlate(plate);
+   if(!liveForm()||version!==lookupVersion||form.elements.type.value!=='Vehículo'||normalizePlate(code.value)!==plate)return;
+   lookupButton.disabled=false;
+   if(!record){lookupMessage.textContent='No encontramos esta placa en los ejemplos. Puedes completar marca, modelo y color manualmente.';return;}
+   ['brand','model','color'].forEach(k=>{form.elements[k].value=record[k];form.elements[k].setCustomValidity('');});detailsPlate=plate;lookupMessage.textContent='Datos autocompletados para '+plate+' (demostración). Revisa antes de guardar.';
+  }catch(error){if(liveForm()&&version===lookupVersion){lookupButton.disabled=false;lookupMessage.textContent='No se pudo consultar la placa. Intenta de nuevo o completa los datos manualmente.';}}
  };
- form.onsubmit=e=>{e.preventDefault();const vehicle=form.elements.type.value==='Vehículo',plateKind=vehicle?detectPlateKind(formatCode()):'';if(vehicle&&!validPlate())return;if(!validate(form))return;
- const d=Object.fromEntries(new FormData(form));d.code=vehicle?formatCode():d.code.trim().toUpperCase();if(vehicle)d.plateKind=plateKind;
- if(a.media.some(x=>x.id!==id&&x.type===d.type&&x.code===d.code)){code.setCustomValidity('Este medio ya está registrado en esta cuenta.');code.reportValidity();return;}
- const others=vehicle?accounts.filter(x=>x.id!==a.id&&x.media.some(v=>v.type==='Vehículo'&&v.code===d.code)):[];
- confirmChange('Confirmar medio de acceso',`<div class="summary-lines"><div><span>Tipo</span><b>${esc(d.type)}</b></div>${vehicle?`<div><span>Tipo de placa</span><b>${esc(d.plateKind)}</b></div>`:''}<div><span>Código / placa</span><b>${esc(d.code)}</b></div>${vehicle?`<div><span>Vehículo</span><b>${esc(d.brand)} ${esc(d.model)} · ${esc(d.color)}</b></div>`:''}<div><span>Cuenta</span><b>${a.id}</b></div></div>${others.length?`<div class="notice warning">Esta placa también está en ${others.length} cuenta(s). Se conservarán esos registros.</div>`:''}`,()=>{
- const value={...d,ocr:d.ocr==='Activada',id:id||'M'+(++sequence)};if(m)Object.assign(m,value);else a.media.push(value);audit('Medio guardado',d.code);closeModal();refresh();showToast('Medio guardado solo en esta cuenta.');});
+ form.onsubmit=e=>{
+  e.preventDefault();if(committed||!liveForm())return;const selectedType=form.elements.type.value;
+  if(selectedType==='Código QR'||(m&&(m.type!=='Vehículo'||selectedType!==originalType))||(!m&&!['Vehículo','Tarjeta Mifare / NFC'].includes(selectedType))){showToast('El código QR es único por cuenta y solo se puede consultar. Añade un vehículo o una tarjeta Mifare / NFC.');return;}
+  const vehicle=selectedType==='Vehículo';formatCode();
+  if(vehicle&&!validPlate())return;
+  if(!vehicle){try{code.value=normalizeMifareHex(code.value);}catch(error){code.setCustomValidity(error.message);code.reportValidity();return;}}
+  if(!validateMediaFields(form))return;
+  const d=Object.fromEntries(new FormData(form));d.code=normalizeAccessCode(d.type,d.code);
+  if(vehicle){d.plateKind=detectPlateKind(d.code);for(const k of ['brand','model','color'])d[k]=d[k].trim();if(!['Activada','Desactivada'].includes(d.ocr)){showToast('Revisa la apertura por placa.');return;}}
+  const duplicate=()=>vehicle?a.media.some(x=>x!==m&&x.type===d.type&&normalizeAccessCode(x.type,x.code)===d.code):!!mifareCardConflict(d.code,m);
+  const duplicateMessage=vehicle?'Este medio ya está registrado en esta cuenta.':'Esta tarjeta Mifare / NFC ya está registrada en una cuenta. No puede repetirse en otra.';
+  if(duplicate()){code.setCustomValidity(duplicateMessage);code.reportValidity();return;}
+  if(vehicle&&d.ocr==='Activada'&&plateReadingConflict(a,d.code)){form.elements.ocr.setCustomValidity('Esta placa ya tiene la lectura de matrícula activada en otra cuenta. Selecciona Desactivada para registrarla aquí.');form.elements.ocr.reportValidity();return;}
+  const others=vehicle?accounts.filter(x=>x.id!==a.id&&x.media.some(v=>v.type==='Vehículo'&&normalizeAccessCode(v.type,v.code)===d.code)):[];
+  let reviewForm;
+  confirmChange('Confirmar medio de acceso',`<div class="summary-lines"><div><span>Tipo</span><b>${esc(d.type)}</b></div>${vehicle?`<div><span>Tipo de placa</span><b>${esc(d.plateKind)}</b></div>`:''}<div><span>Código / placa</span><b>${esc(d.code)}</b></div>${vehicle?`<div><span>Vehículo</span><b>${esc(d.brand)} ${esc(d.model)} · ${esc(d.color)}</b></div><div><span>Apertura por placa</span><b>${esc(d.ocr)}</b></div>`:''}<div><span>Cuenta</span><b>${a.id}</b></div></div>${others.length?`<div class="notice warning">Esta placa también está en ${others.length} cuenta(s). Se conservarán esos registros.</div>`:''}`,()=>{
+   if(committed||cancelled||!dialog.open||$('#confirmForm')!==reviewForm||!reviewForm?.isConnected)return;
+   if(current()!==a||a.state!=='Activa'||(m&&(!a.media.includes(m)||JSON.stringify(m)!==originalSnapshot||m.type!=='Vehículo'))||d.type==='Código QR'||(!m&&!['Vehículo','Tarjeta Mifare / NFC'].includes(d.type))||a.media.filter(x=>x.type==='Código QR').length!==1){closeModal();showToast('No se guardó el medio porque los datos cambiaron. Vuelve a revisarlos. El QR solo se puede consultar.');return;}
+   if(duplicate()){closeModal();showToast(duplicateMessage);return;}
+   if(vehicle&&d.ocr==='Activada'&&plateReadingConflict(a,d.code)){closeModal();showToast('Esta placa ya tiene la lectura de matrícula activada en otra cuenta. Revisa el medio y selecciona Desactivada.');return;}
+   committed=true;let newId=id;if(!newId){do{newId='M'+(++sequence);}while(a.media.some(x=>x.id===newId));}
+   const value={...d,id:newId,...(vehicle?{ocr:d.ocr==='Activada'}:{inputCode:d.code,code:reverseMifarePairs(d.code),codeEncoding:'hex-byte-reversed'})};if(m)Object.assign(m,value);else a.media.push(value);audit('Medio guardado',d.code);closeModal();refresh();showToast('Medio guardado solo en esta cuenta.');
+  });reviewForm=$('#confirmForm');
  };
 }
 const physicalTickets=[{id:'457267',zone:'Aeropuerto',equipment:'15',date:'25/09/2026 11:46',plate:'PBA1234'}];
@@ -906,7 +992,19 @@ function renderTopup(){
  <aside class="wallet-summary payment-summary"><h3>Resumen de pago</h3><div class="payment-summary-group"><div class="payment-summary-title">Recarga IGOR</div><div class="summary-lines"><div><span>Subtotal</span><b id="topupRechargeSubtotal">${money(topupBreakdown(rechargeAmount).rechargeSubtotal)}</b></div><div><span>IVA (15%)</span><b id="topupRechargeIva">${money(topupBreakdown(rechargeAmount).rechargeIva)}</b></div><div><span>Total recarga</span><b id="topupRechargeTotal">${money(topupBreakdown(rechargeAmount).rechargeTotal)}</b></div></div></div><div class="payment-summary-group"><div class="payment-summary-title">Servicio IGOR (10%)</div><div class="summary-lines"><div><span>Subtotal</span><b id="topupServiceSubtotal">${money(topupBreakdown(rechargeAmount).serviceSubtotal)}</b></div><div><span>IVA (15%)</span><b id="topupServiceIva">${money(topupBreakdown(rechargeAmount).serviceIva)}</b></div><div><span>Total servicio</span><b id="topupServiceTotal">${money(topupBreakdown(rechargeAmount).serviceTotal)}</b></div></div></div><div class="payment-total"><span>Total a pagar</span><b id="topupTotal">${money(topupBreakdown(rechargeAmount).grandTotal)}</b></div>${btn('Revisar recarga','pay-topup','primary','id="reviewTopupButton" '+(cards.length&&!editing&&rechargeAmount>0?'':'disabled'))}<small>Valores ilustrativos. No se realizará un cobro real.</small></aside></div>`;
 }
 function topupBreakdown(amount){const rechargeTotal=amount,rechargeSubtotal=Math.round(rechargeTotal*100/115),rechargeIva=rechargeTotal-rechargeSubtotal,serviceTotal=Math.round(rechargeTotal*.1),serviceSubtotal=Math.round(serviceTotal*100/115),serviceIva=serviceTotal-serviceSubtotal;return {rechargeSubtotal,rechargeIva,rechargeTotal,serviceSubtotal,serviceIva,serviceTotal,grandTotal:rechargeTotal+serviceTotal};}
-function createRechargeInvoices(account,recharge){const base=recharge.id||'RC-'+(++sequence),date=recharge.date||now();account.invoices.unshift({billingName:account.billing.name,id:'FAC-'+base+'-S',date,concept:'Servicio IGOR por recarga',total:recharge.fee||0,invoiceType:'Servicio',reference:base});account.invoices.unshift({billingName:account.billing.name,id:'FAC-'+base+'-R',date,concept:'Recarga de saldo IGOR',total:recharge.amount||0,invoiceType:'Recarga',reference:base});}
+function createRechargeInvoices(account,recharge){
+ if(!account||account.state!=='Activa'||(recharge.state&&recharge.state!=='Aprobada'))return [];
+ const amount=recharge.amount||0,fee=recharge.fee||0,tipoRecarga=recharge.tipoRecarga;
+ if(!Number.isSafeInteger(amount)||amount<=0||!Number.isSafeInteger(fee)||fee<0||!['manual','automatica'].includes(tipoRecarga))return [];
+ const base=recharge.id||'RC-'+(++sequence),date=recharge.date||now();
+ if(account.invoices.some(invoice=>invoice.reference===base||invoice.id==='FAC-'+base+'-R'||invoice.id==='FAC-'+base+'-S'))return [];
+ const kinds=[...(fee>0?[{invoiceType:'Servicio',total:fee,suffix:'S'}]:[]),{invoiceType:'Recarga',total:amount,suffix:'R'}];
+ const allInvoices=accounts.flatMap(item=>item.invoices).concat(accounts.includes(account)?[]:account.invoices);
+ let last=allInvoices.reduce((max,invoice)=>Number(invoice.codEst)===Number(invoiceDemoSeries.codEst)&&Number(invoice.ptoEmision)===Number(invoiceDemoSeries.ptoEmision)&&Number.isSafeInteger(Number(invoice.secuencial))?Math.max(max,Number(invoice.secuencial)):max,0);
+ if(last+kinds.length>999999999)throw new RangeError('Se agotó la numeración de facturas de demostración.');
+ const created=kinds.map(kind=>{const invoice={billingName:account.billing.name,id:'FAC-'+base+'-'+kind.suffix,...invoiceDemoSeries,secuencial:++last,date,tipoRecarga,invoiceType:kind.invoiceType,total:kind.total,reference:base};invoice.concept=invoiceDescription(invoice);return invoice;});
+ created.forEach(invoice=>account.invoices.unshift(invoice));return created;
+}
 function updateTopup(){
  const field=$('#topupAmount');if(!field)return;field.setCustomValidity('');const minimum=syncAutoRecharge(current()).enabled?10:0,amount=safeCents(field.value,minimum,10000);
  if(amount===null){const review=$('#reviewTopupButton');if(review)review.disabled=true;['topupRechargeSubtotal','topupRechargeIva','topupRechargeTotal','topupServiceSubtotal','topupServiceIva','topupServiceTotal','topupTotal'].forEach(id=>{const el=$('#'+id);if(el)el.textContent='—';});return;}
@@ -918,7 +1016,7 @@ function payTopup(){
  const amount=rechargeAmount,breakdown=topupBreakdown(amount),fee=breakdown.serviceTotal,approved=$('#topupOutcome').value==='approved';
  let applied=false;confirmChange('Confirmar recarga con tarjeta',`<div class="summary-lines"><div><span>Tarjeta</span><b>${card.brand} •••• ${card.last}</b></div><div><span>Subtotal recarga</span><b>${money(breakdown.rechargeSubtotal)}</b></div><div><span>IVA recarga (15%)</span><b>${money(breakdown.rechargeIva)}</b></div><div><span>Total recarga</span><b>${money(breakdown.rechargeTotal)}</b></div><div><span>Subtotal servicio</span><b>${money(breakdown.serviceSubtotal)}</b></div><div><span>IVA servicio (15%)</span><b>${money(breakdown.serviceIva)}</b></div><div><span>Total servicio</span><b>${money(breakdown.serviceTotal)}</b></div><div><span>Total a pagar</span><b>${money(breakdown.grandTotal)}</b></div></div><p class="small muted">Simulación: pago ${approved?'aprobado':'rechazado'}. No se hará un cargo real.</p>`,()=>{
  if(applied)return;if(current()?.id!==a.id||a.state!=='Activa'||amount<=0||amount<(syncAutoRecharge(a).enabled?1000:1)||!a.cards.some(item=>item.id===card.id&&item.state==='Vigente')){closeModal();showToast('La configuración o la tarjeta cambió. Revisa la recarga nuevamente.');return;}applied=true;
- const id='RC-'+(++sequence),breakdown=topupBreakdown(amount),record={id,date:now(),amount,fee:breakdown.serviceTotal,total:breakdown.grandTotal,method:card.brand+' •••• '+card.last,state:approved?'Aprobada':'Rechazada',reference:'DEMO-'+sequence};
+ const id='RC-'+(++sequence),breakdown=topupBreakdown(amount),record={id,date:now(),amount,tipoRecarga:'manual',fee:breakdown.serviceTotal,total:breakdown.grandTotal,method:card.brand+' •••• '+card.last,state:approved?'Aprobada':'Rechazada',reference:'DEMO-'+sequence};
  a.recharges.unshift(record);if(approved){a.balance+=amount;a.moves.unshift({...record,type:'Billetera',concept:'Recarga con tarjeta',balance:a.balance,authorization:'DEMO-'+sequence,bank:'Aprobada (demo)'});createRechargeInvoices(a,record);}
  audit('Recarga con tarjeta',record.state);refresh();modal(approved?'Recarga aprobada':'Recarga rechazada',`<div class="notice ${approved?'':'warning'}">${ico(approved?'check':'info')}<span>${approved?'Se acreditaron '+money(amount)+' en esta billetera de demostración.':'El pago de ejemplo fue rechazado. No se descontó dinero ni se acreditó saldo.'}</span></div><div class="summary-lines"><div><span>Saldo disponible</span><b>${money(a.balance)}</b></div><div><span>Referencia</span><b>${record.reference}</b></div></div><div class="form-actions">${btn('Cerrar','close','primary')}</div>`);
  },{label:'Simular recarga'});
@@ -1034,13 +1132,15 @@ document.addEventListener('click',e=>{
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;if(b.dataset.nav){go(b.dataset.nav);return;}if(b.dataset.mode){setMode(b.dataset.mode);return;}if(b.dataset.example){setMode(b.dataset.example);$('#query').value={plate:'PBA1234',email:'stalin@ejemplo.com',document:'1712345678'}[mode];doSearch();return;}if(b.dataset.select){selectAccount(b.dataset.select);return;}if(b.dataset.dataTab){dataTab=b.dataset.dataTab;renderView();return;}if(b.dataset.walletTab){walletTab=b.dataset.walletTab;renderView();return;}if(b.dataset.moveTab){moveTab=b.dataset.moveTab;renderView();return;}const action=b.dataset.action,id=b.dataset.id,a=current();if(!action)return;if(action.startsWith('go-')){go(action.slice(3));return;}switch(action){case'close':closeModal();break;case'help':help();break;case'cash':cashForm();break;case'edit-personal':editPersonal();break;case'edit-billing':editPersonal(true);break;case'card':cardFlow(id);break;case'recurring':recurring();break;case'media-add':mediaForm();break;case'media-edit':mediaForm(id);break;case'ticket-search':ticketSearch();break;case'ticket-detail':ticketDetail(id);break;case'move-detail':moveDetail(id);break;case'discount':discount(id);break;
 case'media-remove':if(activeAllowed()){
  const m=a.media.find(x=>x.id===id);if(!m)return;
- if(m.type==='Código QR'){showToast('Los códigos QR no se pueden eliminar.');break;}
- const isVehicle=m.type==='Vehículo';
- confirmChange('Quitar medio de esta cuenta',`<p>Se quitará <b>${esc(m.code)}</b> de ${esc(a.name)}. Las otras cuentas conservarán sus registros.</p>`,note=>{
-  a.media=a.media.filter(x=>x.id!==id);
-  audit('Medio retirado',m.code+(note?' · '+note:''));
+ if(m.type==='Código QR'){showToast('El código QR es único por cuenta y solo se puede consultar.');break;}
+ const isVehicle=m.type==='Vehículo',originalSnapshot=JSON.stringify(m),dialog=$('#modal');let reviewForm,committed=false;
+ confirmChange('Quitar medio de esta cuenta',`<p>Se quitará <b>${esc(accessMediaDisplayCode(m))}</b> de ${esc(a.name)}. Las otras cuentas conservarán sus registros.</p>`,note=>{
+  if(committed||!dialog.open||$('#confirmForm')!==reviewForm||!reviewForm?.isConnected)return;
+  if(current()!==a||a.state!=='Activa'||!a.media.includes(m)||JSON.stringify(m)!==originalSnapshot||m.type==='Código QR'||a.media.filter(x=>x.type==='Código QR').length!==1){closeModal();showToast('No se retiró el medio. El QR es único por cuenta y solo se puede consultar.');return;}
+  committed=true;a.media=a.media.filter(x=>x!==m);
+  audit('Medio retirado',accessMediaDisplayCode(m)+(note?' · '+note:''));
   closeModal();refresh();showToast('Medio retirado únicamente de esta cuenta.');
- },{reason:!isVehicle,label:'Quitar de esta cuenta',danger:true});
+ },{reason:!isVehicle,label:'Quitar de esta cuenta',danger:true});reviewForm=$('#confirmForm');
  if(isVehicle){
   const form=$('#confirmForm'),check=form.querySelector('input[type="checkbox"]'),submit=form.querySelector('button[type="submit"]');
   submit.disabled=!check.checked;
