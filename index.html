@@ -124,7 +124,63 @@
 .discount-final-total span,.discount-final-total strong{color:#166534}
 .discount-final-total strong{font-weight:800;font-size:1.125rem}
 </style>
-</head>
+<style>
+/* Descuentos de Estadías: presentation aligned to the supplied portal views. */
+.stay-picker{position:relative;min-width:0;align-self:start}
+.stay-picker-control{position:relative}
+.stay-picker-control input{width:100%;min-height:48px;padding:10px 44px 10px 14px;border:1px solid #cbd5e1;border-radius:10px;background:white;color:var(--text);font-size:16px;font-weight:400}
+.stay-picker-control input:focus{border-color:#e84889;outline:2px solid #e8488933;outline-offset:1px}
+.stay-picker-control input:disabled{background:#f3f6f8;color:#667183;cursor:not-allowed}
+.stay-picker-toggle{position:absolute;right:4px;inset-block:4px;width:40px;border:0;border-radius:7px;background:transparent;color:var(--muted);font-size:20px;line-height:1}
+.stay-picker-help{font-weight:400;font-size:12px;color:var(--muted)}
+.stay-picker-menu{position:absolute;inset-inline:0;top:calc(100% - 18px);z-index:8;max-height:230px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text);box-shadow:0 10px 26px #0a162926}
+.stay-picker-option,.stay-picker-empty{padding:9px 13px;font-weight:500;font-size:14px;line-height:1.35}
+.stay-picker-option{cursor:pointer}
+.stay-picker-option:hover,.stay-picker-option.is-highlighted,.stay-picker-option[aria-selected="true"]{background:#fce6ef;color:#982250}
+.stay-picker-empty{color:var(--muted)}
+.stay-picker-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+#supportApp.stay-view{background:#edf3f7}
+.stay-view .content{max-width:none;padding:12px 32px 30px}
+.stay-view .steps,.stay-view .footnote,.stay-view .demo,.stay-view .topbar{display:none}
+.stay-view .sidebar{overflow-y:auto}
+.stay-view .sidebar .brand,.stay-view .sidebar .stay-attention,.stay-view .sidebar .portal-return{display:none}
+.stay-view .sidebar .nav{padding:0 12px}
+.stay-view .sidebar .nav button{padding:13px 12px;min-height:48px;margin-bottom:5px;border-radius:10px}
+.stay-view #accountNav .icon{display:none}
+.stay-view #accountNav [data-nav=home]:not(.active){background:#edf3f7}
+.stay-view #accountNav .active{box-shadow:inset 3px 0 #ed3980;background:#fbe6ef;color:#b8245e}
+.stay-view .account-context{background:white;border-top:2px solid #ef4084;padding:20px 24px;min-height:142px;margin-bottom:24px;border-radius:20px;gap:16px}
+.stay-view .account-context .account-name-line{display:none}
+.stay-view .account-context .identity h2{margin:0 0 6px}
+.stay-view .account-context .context-money strong{font-size:24px}
+.stay-head{display:flex;justify-content:space-between;gap:14px;align-items:center;margin:0 0 20px}
+.stay-head h1{margin-bottom:7px}.stay-head p{font-size:14px;color:var(--muted)}.stay-head .btn{min-height:46px}
+.stay-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.stay-tabs button,.stay-action{border:1px solid var(--border);background:white;color:var(--muted);border-radius:10px;padding:10px 16px;font-size:14px;font-weight:650;min-height:44px}
+.stay-tabs button.active{color:#c72867;border-color:#f7a5c5;background:#fce6ef}
+.stay-card{padding:26px;border:1px solid var(--border);border-radius:20px;background:white}
+.stay-card h2{font-size:20px;margin:0 0 4px}.stay-copy{color:var(--muted);line-height:1.55}
+.stay-overflow{overflow:auto;border:1px solid var(--border);border-radius:15px;margin-top:16px}
+.stay-table{border-collapse:collapse;width:100%;min-width:790px;font-size:14px}
+.stay-table th{white-space:nowrap;text-align:left;background:#f3f6f8;color:var(--muted);font-size:12px;font-weight:650;padding:12px 16px}
+.stay-table td{padding:16px;border-top:1px solid var(--border);white-space:nowrap}
+.stay-table td small{display:block;font-size:12px;color:var(--muted);white-space:normal}
+.stay-table .stay-empty{padding:26px;text-align:center;color:var(--muted)}
+.stay-action{color:#a72559;background:#fdf6f9;border-color:#fac6db;white-space:nowrap;min-height:40px;padding:8px 11px}
+.stay-paging{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:15px;color:var(--muted);font-size:13px}
+.stay-paging>div,.stay-paging label{display:flex;align-items:center;gap:9px}.stay-paging select,.stay-page-number{border:1px solid var(--line);border-radius:10px;min-height:36px;min-width:38px;background:white;color:var(--text);padding:3px 9px}
+.stay-page-number{display:grid;place-items:center;background:#e83f83;color:white;border-color:#e83f83;font-size:16px;font-weight:650}
+.stay-register{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;border:1px solid var(--border);border-radius:20px;padding:25px}
+.stay-field{display:grid;gap:7px;font-size:14px;color:#35465f;font-weight:650}.stay-wide{grid-column:1/-1}
+.stay-field select,.stay-field textarea{width:100%;border:1px solid #cbd5e1;border-radius:10px;background:#edf3f7;color:var(--text);padding:10px 14px;font-size:16px;font-weight:400;min-height:48px}
+.stay-field select{background:#fff}.stay-field select:disabled{background:#f3f6f8;color:#667183;cursor:not-allowed}.stay-field select:focus,.stay-field textarea:focus{border-color:#e84889;outline:2px solid #e8488933;outline-offset:1px}
+.stay-register-actions{display:flex;gap:14px;justify-content:space-between;flex-wrap:wrap;align-items:center}
+.stay-status{border-radius:16px;padding:4px 9px;background:#eaf7ef;color:#106437;font-size:12px;font-weight:700}.stay-status.pending{background:#fce7f0;color:#a72559}
+@media(max-width:900px){.stay-view .content{padding:14px 20px 24px}.stay-card{padding:20px}.stay-register{padding:18px}}
+@media(max-width:700px){.stay-view .topbar{display:flex}.stay-view .content{padding:14px 14px 24px}.stay-register{grid-template-columns:1fr;padding:15px}.stay-card{padding:16px}.stay-view .account-context{min-height:auto;padding:16px;gap:9px}.stay-head .btn{flex:none}}
+</style>
+<style>.stay-media-label,.stay-view .media-label{display:none}.stay-view .stay-media-label{display:inline}</style></head>
 <body>
 <main class="login-screen" id="loginScreen" aria-labelledby="loginTitle">
  <section class="login-card" id="recoveryCard" hidden>
@@ -160,12 +216,12 @@
   <div class="module-session"><span>Daysi A. · Sesión de prueba</span><button type="button" class="btn text" data-logout>Cerrar sesión</button></div>
  </div>
 </main>
-<main class="promo-screen" id="promoScreen" aria-labelledby="promoTitle" hidden><div class="promo-inner"><div class="promo-top"><div><h1 id="promoTitle">Gesti&oacute;n de C&oacute;digos Promocionales</h1><p>Configura una promoci&oacute;n para generar c&oacute;digos de prueba.</p></div><button type="button" class="btn text" id="promoBack">Volver al inicio</button></div><form class="promo-form" id="promoForm" novalidate><div class="promo-grid"><div class="field"><label for="promoName">Nombre *</label><input id="promoName" name="name" required placeholder="Ej. Bienvenida octubre"></div><div class="field"><label for="promoStart">Fecha inicial de validez *</label><input id="promoStart" name="start" type="date" required></div><div class="field"><label for="promoEnd">Fecha final de validez *</label><input id="promoEnd" name="end" type="date" required></div><div class="field"><label for="promoType">Tipo de promoci&oacute;n *</label><select id="promoType" name="type" required><option value="">Selecciona una opci&oacute;n</option><option>&Uacute;nico</option><option>Secuencial</option></select></div><div class="field" id="promoQuantityField" hidden><label for="promoQuantity">Cantidad de códigos a generar *</label><input id="promoQuantity" name="quantity" type="text" inputmode="numeric" pattern="[0-9]+" disabled placeholder="Ej. 10"></div><div class="field"><label for="promoPrefix">Prefijo *</label><input id="promoPrefix" name="prefix" required placeholder="Ej. OCT"></div><div class="field"><label for="promoValue">Valor *</label><input id="promoValue" name="value" type="number" min="0.01" step="0.01" required placeholder="Saldo por c&oacute;digo"></div></div><p class="promo-demo-note">Simulación: el valor representa saldo por código. Único: se genera un solo código compartido para todas las cuentas, con fecha inicial y final de validez. Cada cuenta puede recibirlo una sola vez entre ADMIN, CLIENTE y app; sigue disponible para las demás mientras esté vigente. Secuencial: se genera la cantidad indicada de códigos consecutivos; cada código admite un único canje global para una cuenta y después queda Utilizado. No se generan códigos reales ni se realizan canjes.</p><p class="error" id="promoError" role="alert" hidden></p><div class="promo-actions"><button type="button" class="btn text" id="promoClear">Limpiar</button><button type="submit" class="btn primary">Generar c&oacute;digos</button></div></form><section class="promo-form" id="promoGenerated" style="margin-top:24px" hidden aria-labelledby="promoGeneratedTitle"><h2 id="promoGeneratedTitle" tabindex="-1">Códigos generados</h2><p class="promo-demo-note">Resultados de esta sesión de simulación. Los códigos nuevos comienzan sin canjes. Se incluyen dos ejemplos ficticios con canjes para revisar el historial y el detalle de usuarios. Único acumula canjes de cuentas distintas y sigue Disponible mientras esté vigente; cada cuenta solo puede recibirlo una vez entre todos los canales. Secuencial pasa a Utilizado tras el primer canje de cada código. El contador y el estado representarían los canjes reales cuando exista integración.</p><div class="field" style="margin-top:20px;max-width:320px"><label for="promoStatusFilter">Estado del código</label><select id="promoStatusFilter" aria-describedby="promoStatusFilterHint"><option value="all">Todos</option><option value="available">Disponibles</option><option value="used">Usados</option></select></div><p id="promoStatusFilterHint" class="promo-demo-note">El filtro usa el estado actual: Usados muestra los códigos marcados como Utilizado. Los de tipo Único siguen disponibles para otras cuentas mientras estén vigentes.</p><p id="promoCount" class="small" style="margin:16px 0" aria-live="polite"></p><div style="overflow-x:auto"><table style="width:100%;min-width:800px"><thead><tr><th>Código</th><th>Promoción</th><th>Tipo</th><th>Valor</th><th>Vigencia</th><th>Estado</th><th>Canjes</th></tr></thead><tbody id="promoRows"></tbody></table></div><div class="promo-actions"><button type="button" class="btn" id="promoPrevious">Anterior</button><button type="button" class="btn" id="promoNext">Siguiente</button></div></section><section class="promo-form" style="margin-top:24px" aria-labelledby="promoUsageTitle"><h2 id="promoUsageTitle">Historial de canjes</h2><p class="promo-demo-note">Una fila por uso. Busca por el texto del código y combina la búsqueda con la fecha de uso, incluyendo ambos días. Los totales y el estado del detalle siguen siendo globales. Las fechas de los ejemplos son ficticias.</p><form id="promoUsageFilter" novalidate style="margin-top:20px"><div class="field" style="margin-bottom:20px"><label for="promoUsageName">Nombre del código promocional</label><input type="search" id="promoUsageName" placeholder="Ej. EJEMPLO-UNI" aria-describedby="promoUsageNameHint"><small id="promoUsageNameHint">Escribe todo o parte del código. No distingue mayúsculas de minúsculas.</small></div><div class="promo-grid"><div class="field"><label for="promoUsageFrom">Desde</label><input type="date" id="promoUsageFrom"></div><div class="field"><label for="promoUsageTo">Hasta</label><input type="date" id="promoUsageTo"></div></div><p class="error" id="promoUsageError" role="alert" hidden></p><div class="promo-actions"><button type="button" class="btn" id="promoUsageReset">Quitar filtros</button><button type="submit" class="btn primary">Aplicar filtros</button><button type="button" class="btn" id="promoUsageDownload">Descargar CSV</button></div></form><p id="promoUsageCount" class="small" style="margin:16px 0" aria-live="polite"></p><p id="promoUsageDateNote" class="promo-demo-note"></p><div style="overflow-x:auto"><table style="width:100%;min-width:850px"><thead><tr><th>Código</th><th>Tipo</th><th>Fecha de uso</th><th>ID del usuario</th><th>Nombre del usuario</th><th>Saldo por código</th><th>Estado actual del código</th></tr></thead><tbody id="promoUsageRows"></tbody></table></div><div class="promo-actions"><button type="button" class="btn" id="promoUsagePrevious">Anterior</button><button type="button" class="btn" id="promoUsageNext">Siguiente</button></div></section></div></main>
+<main class="promo-screen" id="promoScreen" aria-labelledby="promoTitle" hidden><div class="promo-inner"><div class="promo-top"><div><h1 id="promoTitle">Gesti&oacute;n de C&oacute;digos Promocionales</h1><p>Configura una promoci&oacute;n para generar c&oacute;digos de prueba.</p></div><button type="button" class="btn text" id="promoBack">Volver al inicio</button></div><form class="promo-form" id="promoForm" novalidate><div class="promo-grid"><div class="field"><label for="promoName">Nombre *</label><input id="promoName" name="name" required placeholder="Ej. Bienvenida octubre"></div><div class="field"><label for="promoStart">Fecha inicial de validez *</label><input id="promoStart" name="start" type="date" required></div><div class="field"><label for="promoEnd">Fecha final de validez *</label><input id="promoEnd" name="end" type="date" required></div><div class="field"><label for="promoType">Tipo de promoci&oacute;n *</label><select id="promoType" name="type" required><option value="">Selecciona una opci&oacute;n</option><option>&Uacute;nico</option><option>Secuencial</option></select></div><div class="field" id="promoQuantityField" hidden><label for="promoQuantity">Cantidad de códigos a generar *</label><input id="promoQuantity" name="quantity" type="text" inputmode="numeric" pattern="[0-9]+" disabled placeholder="Ej. 10"></div><div class="field"><label for="promoPrefix">Prefijo *</label><input id="promoPrefix" name="prefix" required placeholder="Ej. OCT"></div><div class="field"><label for="promoValue">Valor *</label><input id="promoValue" name="value" type="number" min="0.01" step="0.01" required placeholder="Saldo por c&oacute;digo"></div></div><p class="promo-demo-note">Simulación: el valor representa saldo por código. Único: se genera un solo código compartido para todas las cuentas, con fecha inicial y final de validez. Cada cuenta puede recibirlo una sola vez entre ADMIN, CLIENTE y app; sigue disponible para las demás mientras esté vigente. Secuencial: se genera la cantidad indicada de códigos consecutivos; cada código admite un único canje global para una cuenta y después queda Utilizado. No se generan códigos reales ni se realizan canjes.</p><p class="error" id="promoError" role="alert" hidden></p><div class="promo-actions"><button type="button" class="btn text" id="promoClear">Limpiar</button><button type="submit" class="btn primary">Generar c&oacute;digos</button></div></form><section class="promo-form" id="promoGenerated" style="margin-top:24px" hidden aria-labelledby="promoGeneratedTitle"><h2 id="promoGeneratedTitle" tabindex="-1">Códigos generados</h2><p class="promo-demo-note">Resultados de esta sesión de simulación. Los códigos nuevos comienzan sin canjes. Se incluyen dos ejemplos ficticios con canjes para revisar el historial y el detalle de usuarios. Único acumula canjes de cuentas distintas y sigue Disponible mientras esté vigente; cada cuenta solo puede recibirlo una vez entre todos los canales. Secuencial pasa a Utilizado tras el primer canje de cada código. El contador y el estado representarían los canjes reales cuando exista integración.</p><div class="promo-code-filters"><div class="field"><label for="promoStatusFilter">Estado del código</label><select id="promoStatusFilter" aria-describedby="promoStatusFilterHint"><option value="all">Todos</option><option value="available">Disponibles</option><option value="used">Usados</option></select></div><div class="field"><label for="promoPrefixFilter">Buscar por prefijo</label><div class="promo-code-prefix-controls"><input type="search" id="promoPrefixFilter" placeholder="Ej. EJE" aria-describedby="promoPrefixFilterHint" autocomplete="off"><button type="button" class="btn" id="promoPrefixFilterClear" aria-label="Limpiar búsqueda por prefijo" disabled>Limpiar</button></div><small id="promoPrefixFilterHint">Escribe los primeros caracteres del código.</small></div></div><p id="promoStatusFilterHint" class="promo-demo-note promo-code-filter-note">El filtro usa el estado actual: Usados muestra los códigos marcados como Utilizado. Los de tipo Único siguen disponibles para otras cuentas mientras estén vigentes.</p><p id="promoCount" class="small" style="margin:16px 0" aria-live="polite"></p><div style="overflow-x:auto"><table style="width:100%;min-width:800px"><thead><tr><th>Código</th><th>Promoción</th><th>Tipo</th><th>Valor</th><th>Vigencia</th><th>Estado</th><th>Canjes</th></tr></thead><tbody id="promoRows"></tbody></table></div><div class="promo-actions"><button type="button" class="btn" id="promoPrevious">Anterior</button><button type="button" class="btn" id="promoNext">Siguiente</button></div></section><section class="promo-form" style="margin-top:24px" aria-labelledby="promoUsageTitle"><h2 id="promoUsageTitle">Historial de canjes</h2><p class="promo-demo-note">Una fila por uso. Busca por el texto del código y combina la búsqueda con la fecha de uso, incluyendo ambos días. Los totales y el estado del detalle siguen siendo globales. Las fechas de los ejemplos son ficticias.</p><form id="promoUsageFilter" novalidate style="margin-top:20px"><div class="field" style="margin-bottom:20px"><label for="promoUsageName">Nombre del código promocional</label><input type="search" id="promoUsageName" placeholder="Ej. EJEMPLO-UNI" aria-describedby="promoUsageNameHint"><small id="promoUsageNameHint">Escribe todo o parte del código. No distingue mayúsculas de minúsculas.</small></div><div class="promo-grid"><div class="field"><label for="promoUsageFrom">Desde</label><input type="date" id="promoUsageFrom"></div><div class="field"><label for="promoUsageTo">Hasta</label><input type="date" id="promoUsageTo"></div></div><p class="error" id="promoUsageError" role="alert" hidden></p><div class="promo-actions"><button type="button" class="btn" id="promoUsageReset">Quitar filtros</button><button type="submit" class="btn primary">Aplicar filtros</button><button type="button" class="btn" id="promoUsageDownload">Descargar CSV</button></div></form><p id="promoUsageCount" class="small" style="margin:16px 0" aria-live="polite"></p><p id="promoUsageDateNote" class="promo-demo-note"></p><div style="overflow-x:auto"><table style="width:100%;min-width:850px"><thead><tr><th>Código</th><th>Tipo</th><th>Fecha de uso</th><th>ID del usuario</th><th>Nombre del usuario</th><th>Saldo por código</th><th>Estado actual del código</th></tr></thead><tbody id="promoUsageRows"></tbody></table></div><div class="promo-actions"><button type="button" class="btn" id="promoUsagePrevious">Anterior</button><button type="button" class="btn" id="promoUsageNext">Siguiente</button></div></section></div></main>
 <div class="mobile-shade" id="shade"></div>
 <div class="shell" id="supportApp" hidden>
 <aside class="sidebar" id="sidebar">
  <div class="brand"><div class="logo" data-icon="car"></div><div><div class="wordmark">IGOR</div><small>Atención al cliente</small></div></div>
- <div class="side-caption">ATENCIÓN</div>
+ <div class="side-caption stay-attention">ATENCIÓN</div>
  <nav class="nav" aria-label="Navegación principal"><button type="button" class="portal-return" id="returnModules"><span data-icon="back"></span>Volver al inicio</button><button class="active" data-nav="search"><span data-icon="search"></span>Buscar cliente</button></nav>
  <div class="side-caption">CUENTA SELECCIONADA</div>
  <nav class="nav" id="accountNav" aria-label="Opciones de la cuenta">
@@ -173,8 +229,9 @@
   <button data-nav="data" disabled><span data-icon="user"></span>Datos de la cuenta</button>
   <button data-nav="wallet" disabled><span data-icon="wallet"></span>Billetera</button>
   <button data-nav="moves" disabled><span data-icon="list"></span>Movimientos</button>
+  <button type="button" data-nav="discounts" disabled><span data-icon="ticket"></span>Descuentos de Estadías</button>
 <button data-nav="tickets" disabled aria-disabled="true"><span data-icon="ticket"></span>Tickets en curso <span class="badge amber">Pendiente</span></button>
-  <button data-nav="media" disabled><span data-icon="car"></span>Medios de acceso</button>
+  <button data-nav="media" disabled><span data-icon="car"></span><span class="media-label">Medios de acceso</span><span class="stay-media-label">Mis medios</span></button>
   <button data-nav="settings" disabled><span data-icon="settings"></span>Ajustes</button>
  </nav>
  <div class="side-note" id="sideNote">Primero busca al cliente y elige la cuenta que necesita ayuda.</div>
@@ -371,12 +428,12 @@ let rechargeAmount=1000;
 
 let selectedId=null, view='search', mode='plate', lastQuery='', results=[], dataTab='personal',walletTab='cards',moveTab='all',searchVersion=0,toastTimer,cashDraft=null,sequence=1000;
 const current=()=>accounts.find(a=>a.id===selectedId);
-const labels={home:'Ayudar al cliente',data:'Datos de la cuenta',wallet:'Billetera',moves:'Movimientos',tickets:'Tickets en curso',media:'Medios de acceso',settings:'Ajustes',search:'Buscar cliente'};
+const labels={home:'Ayudar al cliente',data:'Datos de la cuenta',wallet:'Billetera',moves:'Movimientos',discounts:'Descuentos de Estadías',tickets:'Tickets en curso',media:'Medios de acceso',settings:'Ajustes',search:'Buscar cliente'};
 function searchAccounts(value,kind){const key=kind==='plate'?normalizePlate(value):kind==='email'?normalizeEmail(value):normalizeDoc(value).toUpperCase();return accounts.filter(a=>kind==='plate'?a.media.some(m=>m.type==='Vehículo'&&normalizePlate(m.code)===key):kind==='email'?normalizeEmail(a.email)===key:normalizeDoc(a.document).toUpperCase()===key);}
 function setMode(kind){mode=kind;searchVersion++;lastQuery='';results=[];$('#results').innerHTML='';setSteps(1);$$('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===kind)));const cfg={plate:['Placa del vehículo','Ej. PBA1234','Escribe la placa completa, con o sin guion.','text'],email:['Correo de la cuenta','Ej. stalin@ejemplo.com','Escribe el correo completo registrado en los datos de la cuenta.','email'],document:['Cédula, RUC o pasaporte','Ej. 1712345678','Cédula: 10 dígitos; RUC: 13 dígitos; pasaporte: 4 a 16 caracteres alfanuméricos.','text']}[kind];$('#queryLabel').textContent=cfg[0];$('#query').placeholder=cfg[1];$('#queryHint').textContent=cfg[2];$('#query').type=cfg[3];$('#query').inputMode=kind==='document'?'text':kind==='email'?'email':'text';$('#query').value='';$('#query').setAttribute('aria-invalid','false');$('#searchError').hidden=true;$('#query').focus();}
 function setSteps(step){for(let i=1;i<=3;i++){$('#step'+i).className='step '+(i===step?'current':i<step?'done':'');}}
 function showToast(text){clearTimeout(toastTimer);$('#toast').innerHTML=ico('check')+'<span>'+esc(text)+'</span>';$('#toast').hidden=false;toastTimer=setTimeout(()=>$('#toast').hidden=true,4500);}
-function renderNav(){ $$('[data-nav]').forEach(b=>{b.classList.toggle('active',b.dataset.nav===view);if(b.closest('#accountNav'))b.disabled=!selectedId;});$('#sideNote').hidden=!!selectedId;$('#topTitle').textContent=labels[view];$('#topSubtitle').textContent='IGOR / '+labels[view];}
+function renderNav(){ $('#supportApp').classList.toggle('stay-view',view==='discounts'); $$('[data-nav]').forEach(b=>{b.classList.toggle('active',b.dataset.nav===view);if(b.closest('#accountNav'))b.disabled=!selectedId;});$('#sideNote').hidden=!!selectedId;$('#topTitle').textContent=labels[view];$('#topSubtitle').textContent='IGOR / '+labels[view];}
 function closeMenu(){$('#sidebar').classList.remove('open');$('#shade').classList.remove('open');$('#menuToggle').setAttribute('aria-expanded','false');}
 let demoSignedIn=false;
 function showModule(accountsOpen){$('#loginScreen').hidden=demoSignedIn;$('#moduleHome').hidden=!demoSignedIn||accountsOpen;$('#supportApp').hidden=!demoSignedIn||!accountsOpen;document.title=!demoSignedIn?'IGOR · Iniciar sesión':accountsOpen?'IGOR · Gestión de cuentas':'IGOR · Administración';closeMenu();window.scrollTo({top:0,behavior:'instant'});}
@@ -384,7 +441,7 @@ function go(next){if(next==='tickets')return;if(next!=='search'&&!current())retu
 function renderResults(){const normalized=mode==='plate'?normalizePlate(lastQuery):mode==='email'?normalizeEmail(lastQuery):normalizeDoc(lastQuery);if(!results.length){$('#results').innerHTML=`<div class="panel empty" style="margin-top:24px">${ico('search')}<h2>No encontramos cuentas con ese dato</h2><p>Revisa <b>${esc(lastQuery)}</b> o pide al cliente otro correo, documento o placa.</p></div>`;return;}
 $('#results').innerHTML=`<div class="result-heading"><div><h2>${results.length} ${results.length===1?'cuenta encontrada':'cuentas encontradas'}</h2><p class="muted small">Coincidencia exacta por ${mode==='plate'?'placa':mode==='email'?'correo':'documento'}: <b>${esc(normalized)}</b></p></div><span class="badge pink">Todas las coincidencias</span></div><div class="notice warning" style="margin-bottom:16px">${ico('info')}<span>Antes de continuar, pregunta al cliente: <b>“¿Cuál de estas cuentas deseas revisar?”</b></span></div><div class="result-list">${results.map(a=>`<article class="panel account-card"><div class="account-name"><div class="account-symbol">${ico(a.kind==='Empresa'?'accounts':'user')}</div><div><h3>${esc(a.name)}</h3><div class="account-id">${a.id} · ${a.kind}</div><div class="tag-row" style="margin-top:8px">${status(a.state)}</div></div></div><dl><dt>Titular de la cuenta</dt><dd>${esc(a.holder)}</dd><dt>${a.docType} · Datos de la cuenta</dt><dd>${esc(a.document)}</dd><dt>Correo registrado</dt><dd>${esc(a.email)}</dd></dl><div><span class="match-label">${mode==='plate'?'Placa registrada en esta cuenta':'Dato coincidente'}</span>${mode==='plate'?`<span class="plate">${esc(normalized)}</span>`:`<span class="badge pink">${mode==='email'?'Mismo correo':'Mismo documento'}</span>`}<p class="small muted" style="margin-top:10px">Saldo: <b>${money(a.balance)}</b></p></div><button class="btn primary" data-select="${a.id}">Atender esta cuenta ${ico('arrow')}</button></article>`).join('')}</div><p class="small muted" style="margin-top:14px">${results.length} de ${results.length} cuentas mostradas. Ninguna cuenta se selecciona automáticamente.</p>`;}
 async function doSearch(event){event?.preventDefault();const value=$('#query').value.trim();let error='';if(!value)error='Escribe un dato para buscar.';else if(mode==='email'&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))error='Revisa el correo. Debe incluir @ y un dominio, por ejemplo: nombre@ejemplo.com.';else if(mode==='document'&&!/^\d{10}(\d{3})?$/.test(normalizeDoc(value)))error='La cédula debe tener 10 dígitos o el RUC, 13 dígitos.';else if(mode==='plate'&&!/^[A-Z0-9]{3,}$/.test(normalizePlate(value)))error='Revisa la placa: escribe al menos 3 letras o números, sin símbolos.';$('#searchError').textContent=error;$('#searchError').hidden=!error;$('#query').setAttribute('aria-invalid',String(!!error));if(error){$('#query').focus();return;}selectedId=null;view='search';renderNav();lastQuery=value;setSteps(2);const version=++searchVersion;$('#results').innerHTML='<div class="loading" role="status">Buscando todas las cuentas coincidentes…</div>';await new Promise(r=>setTimeout(r,220));if(version!==searchVersion)return;results=searchAccounts(value,mode);renderResults();}
-function selectAccount(id){selectedId=id;dataTab='personal';walletTab='cards';moveTab='all';go('home');}
+function selectAccount(id){stayDraft={};stayTab='apply';stayPage=1;selectedId=id;dataTab='personal';walletTab='cards';moveTab='all';go('home');}
 function renderContext(){const a=current();$('#context').innerHTML=`<div class="panel account-context"><div class="account-symbol">${ico(a.kind==='Empresa'?'accounts':'user')}</div><div class="identity"><span class="eyebrow" style="display:block;margin-bottom:3px">Estás atendiendo esta cuenta</span><h2>${esc(a.name)}${view==='data'?btn(ico('edit'),'edit-account-name','text','aria-label="Editar nombre de la cuenta" title="Editar nombre de la cuenta"'):''}</h2><div class="small muted">${a.id} · Titular: ${esc(a.holder)}</div><div class="small muted">${esc(a.email)} · ${a.docType}: ${esc(a.document)}</div></div><div>${status(a.state)}</div><div class="context-money"><span>Saldo disponible</span><strong>${money(a.balance)}</strong></div><button class="btn" data-nav="search">Cambiar cuenta</button></div>${a.state!=='Activa'?`<div class="notice warning" style="margin-bottom:22px">${ico('info')}<span>Esta cuenta está inactiva. Puedes consultar su información. Para modificarla, solicita revisión al responsable.</span></div>`:''}`;}
 function renderContextFixed(){const a=current();if(!a)return;$('#context').innerHTML=`<div class="panel account-context"><div class="account-symbol">${ico(a.kind==='Empresa'?'accounts':'user')}</div><div class="identity"><span class="eyebrow" style="display:block;margin-bottom:3px">Est�s atendiendo esta cuenta</span><h2>${esc(a.name)}</h2><div class="small muted account-id-line">${a.id}</div><div class="small muted account-name-line">Nombre de la cuenta: ${esc(a.name)}</div><div class="small muted">${esc(a.email)} � ${a.docType}: ${esc(a.document)}</div></div><div>${status(a.state)}</div><div class="context-money"><span>Saldo disponible</span><strong>${money(a.balance)}</strong></div><button class="btn" data-nav="search">Cambiar cuenta</button></div>${a.state!=='Activa'?`<div class="notice warning" style="margin-bottom:22px">${ico('info')}<span>Esta cuenta est� inactiva. Puedes consultar su informaci�n. Para modificarla, solicita revisi�n al responsable.</span></div>`:''}`;}
 function renderHomeFixed(){const a=current(),html=renderHome();return html.replace('Confirma el titular','Confirma el nombre de la cuenta').replace(/(<strong>Confirma el nombre de la cuenta<\/strong><p>)[^<]*(<\/p>)/,'$1'+esc(a.name)+'$2').replace(/(<strong>Confirma el n[^<]*<\/strong><p>)[^<]*(<\/p>)/,'$1'+esc(a.id)+'$2');}
@@ -514,7 +571,7 @@ function deleteAccount(){
  const index=accounts.findIndex(x=>x.id===id);if(index<0)return;audit('Cuenta eliminada','Eliminación simulada de '+id);closeModal();accounts.splice(index,1);go('search');showToast('Cuenta '+id+' eliminada de la demostración.');
  };
 }
-function renderView(){$('#workspaceBody').innerHTML=({home:renderHomeFixed,data:renderData,wallet:renderWallet,moves:renderMoves,tickets:renderTickets,media:renderMedia,settings:renderSettings}[view]||renderHomeFixed)();if(view==='data'){if(dataTab==='admins')bindAdminRoleControls();else bindAccountDataForm();}}
+function renderView(){$('#workspaceBody').innerHTML=({home:renderHomeFixed,data:renderData,wallet:renderWallet,moves:renderMoves,discounts:renderStayDiscounts,tickets:renderTickets,media:renderMedia,settings:renderSettings}[view]||renderHomeFixed)();if(view==='discounts')bindStayDiscounts();if(view==='data'){if(dataTab==='admins')bindAdminRoleControls();else bindAccountDataForm();}}
 function refresh(){if(current()){renderContextFixed();renderView();}renderNav();}
 function modal(title,body,caption){$('#modalTitle').textContent=title;$('#modalCaption').textContent=caption|| (current()?`${current().id} · ${current().name}`:'Guía de atención');$('#modalBody').innerHTML=body;$('#modal').dataset.account=selectedId||'';if(!$('#modal').open)$('#modal').showModal();}
 function closeModal(){$('#modal').close();cashDraft=null;}
@@ -865,7 +922,7 @@ function discountRespaldo(value) {
 }
 
 // Read-only simulated CONFIG catalog. No CONFIG service or payment integration.
-const adminDiscountConfig={cutoffDay:3,validations:[
+const adminDiscountConfig={cutoffDay:6,validations:[
  {id:'VAL-QS-USD2',parkingId:'PK-QUICENTRO-SUR',name:'Validación Quicentro $ 2 · ejemplo',type:'fixed',valueCents:200},
  {id:'VAL-QS-10',parkingId:'PK-QUICENTRO-SUR',name:'Validación Quicentro 10% · ejemplo',type:'percentage',basisPoints:1000},
  {id:'VAL-EB-USD1',parkingId:'PK-EL-BOSQUE',name:'Dólar Store · ejemplo',type:'fixed',valueCents:100},
@@ -1159,6 +1216,175 @@ case'export-promos':{const cell=v=>'"'+String(v??'').replace(/^[=+@-]/,"'").repl
 case'export-moves':{const cell=v=>'"'+String(v??'').replace(/^[=+@-]/,"'").replace(/"/g,'""')+'"';const rows=movementExportRows(a);download('\uFEFF'+rows.map(r=>r.map(cell).join(';')).join('\n'),a.id+'_movimientos_DEMO.csv','text/csv;charset=utf-8');break;}
 case'invoice':invoiceDetail(id);break;case'invoice-pdf':downloadInvoicePdf(id);break;
 }});
+/* Account discount screen. All records and changes remain in this demonstration. */
+let stayTab='apply',stayPage=1,stayPageSize=10,stayDraft={};
+const stayExtras=[
+ 'SERVIDOR ADMINISTRACION','SERVIDOR AEROPUERTO','SERVIDOR AUTOPARK','SERVIDOR C.C. CONDADO SHOPPING','SERVIDOR C.C. EL BOSQUE','SERVIDOR CC EL RECREO','SERVIDOR CC SCALA SHOPPING','SERVIDOR CENTRAL ADVENTA','SERVIDOR CENTRAL INGENIA','SERVIDOR CENTRAL TICKET LESS','SERVIDOR CIRCULO MILITAR','SERVIDOR COMPLEJO METROPOLITANO','SERVIDOR HOTEL MARRIOT','SERVIDOR JUNTA DE BENEFICENCIA','SERVIDOR MALL DEL SOL','SERVIDOR MALL EL JARDIN','SERVIDOR PASEO SAN FRANCISCO','SERVIDOR PLAZA PARKING','SERVIDOR POLICENTRO','SERVIDOR TGW QUICENTRO SUR'
+].map((name,i)=>({id:i===4?'PK-EL-BOSQUE':i===19?'PK-QUICENTRO-SUR':'PK-DEMO-'+i,name,zones:i===19?['CC QUICENTRO SUR - GENERAL','Pruebas generales']:['General · demo']}));
+function stayLabels(m){
+ const p=stayExtras.find(p=>p.id===m.parkingId);
+ return [p?.name||m.parkingName||'Sin registrar',m.zoneName||'Sin registrar'];
+}
+function stayCandidates(account,clock=Date.now()){
+ return account.moves.filter(m=>m.type==='Servicio'&&m.balance!==null&&m.amount<0&&!m.demoReference&&!movementIsVoided(m)&&!movementIsRefunded(m)&&!movementValidation(m)&&!(m.discount>0)&&discountDeadline(m,clock).ok);
+}
+function stayMoney(cents){return (cents/100).toLocaleString('es-EC',{minimumFractionDigits:2,maximumFractionDigits:2})+' $';}
+function stayDate(value){return String(value||'Sin registrar').replace(/^(\d\d)-(\d\d)-(\d{4}) (\d\d:\d\d)(?::\d\d)?$/,'$1/$2/$3 $4');}
+function stayDuration(v){const m=String(v||'').match(/^(\d+)h(\d+)m\d+s$/);return m?(+m[1]?+m[1]+' h ':'')+(+m[2])+' min':v||'Sin registrar';}
+function stayHistory(account){
+ const actual=account.moves.filter(m=>m.type==='Servicio'&&movementValidation(m)).map(m=>({d:movementValidation(m),p:stayLabels(m)[0],z:stayLabels(m)[1],state:'Aplicado',id:m.id}));
+ return [...(account.stayReservations||[]).slice().reverse().map(d=>({d,p:d.parking,z:d.zone,state:'Pendiente',id:d.operationId})),...actual];
+}
+function staySelect(name,label,placeholder,values,value,disabled){
+ return `<label class="stay-field">${label}<select name="${name}" ${disabled?'disabled':''} required><option value="">${placeholder}</option>${values.map(([k,v])=>`<option value="${esc(k)}" ${value===k?'selected':''}>${esc(v)}</option>`).join('')}</select></label>`;
+}
+function stayOptions(p){
+ if(!p)return [];
+ const configured=adminDiscountConfig.validations.filter(x=>x.parkingId===p.id).map(x=>[x.id,x.name]);
+ return configured.length?configured:[['DEMO-10','Descuento de ejemplo · 10 %']];
+}
+function stayParkingMatches(value){
+ const clean=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+ const tokens=clean(value).split(/\s+/).filter(Boolean);
+ return stayExtras.filter(p=>tokens.every(token=>clean(p.name).includes(token)));
+}
+function renderStayParkingPicker(p,locked){
+ return `<div class="stay-field stay-picker"><label for="stayParkingQuery">Parqueadero</label>
+ <div class="stay-picker-control"><input id="stayParkingQuery" role="combobox" aria-autocomplete="list" aria-haspopup="listbox" aria-expanded="false" aria-controls="stayParkingList" aria-describedby="stayParkingHelp" placeholder="Elige un parqueadero" value="${esc(p?.name||'')}" autocomplete="off" spellcheck="false" required ${locked?'disabled':''}>
+ <button type="button" class="stay-picker-toggle" id="stayParkingToggle" aria-label="Mostrar parqueaderos" tabindex="-1" ${locked?'disabled':''}><span aria-hidden="true">⌄</span></button></div>
+ <input type="hidden" name="parking" value="${esc(p?.id||'')}">
+ <div class="stay-picker-menu" id="stayParkingMenu" hidden><div role="listbox" id="stayParkingList" aria-label="Parqueaderos"></div><div class="stay-picker-empty" id="stayParkingEmpty" hidden>No se encontraron parqueaderos.</div></div>
+ <span id="stayParkingHelp" class="stay-picker-help">Escribe parte del nombre o elige un parqueadero de la lista.</span><span class="stay-picker-sr" id="stayParkingStatus" role="status"></span></div>`;
+}
+function bindStayParkingPicker(form,capture,rerender){
+ const input=$('#stayParkingQuery'),toggle=$('#stayParkingToggle'),menu=$('#stayParkingMenu'),list=$('#stayParkingList'),empty=$('#stayParkingEmpty'),status=$('#stayParkingStatus');
+ if(!input||input.disabled)return;
+ const field=name=>form.elements.namedItem(name);
+ const selection=()=>field('parking').value;
+ const validity=()=>input.setCustomValidity(input.value&&!selection()?'Selecciona un parqueadero de la lista.':'');
+ let matches=[],active=-1;
+ function close(){
+  menu.hidden=true;input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant');active=-1;
+ }
+ function highlight(index){
+  active=index;
+  Array.from(list.children).forEach((option,i)=>option.classList.toggle('is-highlighted',i===active));
+  if(active<0){input.removeAttribute('aria-activedescendant');return;}
+  const option=list.children[active];
+  input.setAttribute('aria-activedescendant',option.id);option.scrollIntoView({block:'nearest'});
+ }
+ function paint(){
+  matches=stayParkingMatches(selection()?'':input.value);
+  list.innerHTML=matches.map((p,i)=>`<div class="stay-picker-option" role="option" id="stayParkingOption${i}" data-stay-parking="${esc(p.id)}" aria-selected="${selection()===p.id}">${esc(p.name)}</div>`).join('');
+  empty.hidden=matches.length>0;
+  status.textContent=matches.length?`${matches.length} parqueaderos disponibles.`:'No se encontraron parqueaderos.';
+  menu.hidden=false;input.setAttribute('aria-expanded','true');highlight(-1);
+ }
+ function choose(id){
+  const p=matches.find(x=>x.id===id);if(!p)return;
+  stayDraft=capture();
+  if(stayDraft.parking!==p.id){stayDraft.zone='';stayDraft.benefit='';}
+  stayDraft.parking=p.id;close();rerender('zone');
+ }
+ input.addEventListener('focus',paint);
+ input.addEventListener('click',()=>{if(menu.hidden)paint();});
+ input.addEventListener('input',()=>{
+  field('parking').value='';
+  for(const name of ['zone','benefit']){const el=field(name);el.value='';el.disabled=true;}
+  form.querySelector('button[type="submit"]').disabled=true;
+  stayDraft={note:field('note').value};validity();paint();
+ });
+ input.addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+   e.preventDefault();if(menu.hidden)paint();if(!matches.length)return;
+   highlight(active<0?(e.key==='ArrowDown'?0:matches.length-1):Math.min(matches.length-1,Math.max(0,active+(e.key==='ArrowDown'?1:-1))));return;
+  }
+  if(e.key==='Escape'&&!menu.hidden){e.preventDefault();e.stopPropagation();close();return;}
+  if(e.key==='Enter'&&(!menu.hidden||!selection())){
+   e.preventDefault();if(menu.hidden)paint();
+   if(active>=0)choose(matches[active].id);
+   else if(matches.length===1)choose(matches[0].id);
+  }
+ });
+ toggle.addEventListener('pointerdown',e=>e.preventDefault());
+ toggle.addEventListener('click',()=>{const open=menu.hidden;input.focus();if(open)paint();else close();});
+ list.addEventListener('pointerdown',e=>{if(e.target.closest('[data-stay-parking]'))e.preventDefault();});
+ list.addEventListener('click',e=>{const option=e.target.closest('[data-stay-parking]');if(option)choose(option.dataset.stayParking);});
+ input.addEventListener('blur',close);
+ validity();
+}
+
+function renderStayRegistration(a){
+ const locked=a.state!=='Activa',p=stayExtras.find(p=>p.id===stayDraft.parking),options=stayOptions(p);
+ return `<p class="stay-copy">Deja registrado un descuento para la cuenta antes de que salga del parqueadero. No mueve el saldo: se aplica cuando corresponde.</p>
+ <form id="stayRegistration" class="stay-register">
+ ${renderStayParkingPicker(p,locked)}
+ ${staySelect('zone','Zona','Elige una zona',(p?.zones||[]).map(z=>[z,z]),stayDraft.zone,!p||locked)}
+ <div class="stay-wide">${staySelect('benefit','Descuento','Elige un descuento',options,stayDraft.benefit,!stayDraft.zone||locked)}</div>
+ <label class="stay-field stay-wide">Observación (opcional)<textarea name="note" rows="3" maxlength="300" ${locked?'disabled':''}>${esc(stayDraft.note||'')}</textarea></label>
+ <div class="stay-wide stay-register-actions"><small class="muted">Datos de demostración. No se conecta con la salida del parqueadero.</small><button class="btn primary" ${locked||!stayDraft.benefit?'disabled':''} type="submit">Registrar descuento</button></div></form>`;
+}
+function renderStayDiscounts(){
+ const a=current(),locked=a.state!=='Activa';
+ const tabs=[['apply','Aplicar a una estadía'],['register','Registrarse descuento'],['history','Historial']];
+ const heading=tabs.find(([key])=>key===stayTab)[1];
+ let inside='';
+ if(stayTab==='apply'){
+  const list=stayCandidates(a),n=list.length,pgCount=Math.max(1,Math.ceil(n/stayPageSize));
+  stayPage=Math.min(stayPage,pgCount);
+  const start=(stayPage-1)*stayPageSize,visible=list.slice(start,start+stayPageSize);
+  inside=`<p class="stay-copy">Estadías cobradas con el saldo de la Billetera, sin descuento y dentro del período permitido. Se pueden descontar las del mes actual y las del mes anterior hasta el día ${adminDiscountConfig.cutoffDay}.</p>
+  <div class="stay-overflow"><table class="stay-table"><thead><tr><th>Parqueadero</th><th>Entrada</th><th>Salida</th><th>Duración</th><th>Valor cobrado</th><th>Comprobante</th><th aria-label="Acciones"></th></tr></thead><tbody>
+  ${visible.map(m=>{const [parking,zone]=stayLabels(m);return `<tr><td>${esc(parking)}<small>${esc(zone)}</small></td><td>${esc(stayDate(m.entry))}</td><td>${esc(stayDate(m.exit))}</td><td>${esc(stayDuration(m.duration))}</td><td><strong>${stayMoney(-m.amount)}</strong></td><td>${esc(m.reference||m.id)}</td><td>${btn('Aplicar descuento','discount','stay-action',`data-id="${esc(m.id)}" ${locked?'disabled':''}`)}</td></tr>`;}).join('')||'<tr><td colspan="7" class="stay-empty">No hay estadías disponibles para aplicar descuento.</td></tr>'}
+  </tbody></table></div>
+  <div class="stay-paging"><span role="status">Mostrando ${n?start+1:0}–${start+visible.length} de ${n} estadías. Página ${stayPage} de ${pgCount}.</span><div><label>Por página <select id="stayPageSize" aria-label="Estadías por página">${[10,20,50].map(i=>`<option ${i===stayPageSize?'selected':''}>${i}</option>`).join('')}</select></label>${pgCount>1?`<button class="btn" data-stay-step="-1" ${stayPage===1?'disabled':''} aria-label="Página anterior">‹</button>`:''}<span class="stay-page-number" aria-current="page">${stayPage}</span>${pgCount>1?`<button class="btn" data-stay-step="1" ${stayPage===pgCount?'disabled':''} aria-label="Página siguiente">›</button>`:''}</div></div>`;
+ }else if(stayTab==='register'){
+  inside=renderStayRegistration(a);
+ }else{
+  const rows=stayHistory(a);
+  inside=`<p class="stay-copy">Consulta los descuentos aplicados y los registrados para esta cuenta.</p><div class="stay-overflow"><table class="stay-table"><thead><tr><th>Fecha</th><th>Parqueadero</th><th>Descuento</th><th>Estado</th><th>Responsable</th></tr></thead><tbody>${rows.map(({d,p,z,state})=>`<tr><td>${esc(stayDate(d.date))}</td><td>${esc(p)}<small>${esc(z)}</small></td><td>${esc(d.validationName||d.benefit)}${d.note?`<small>${esc(d.note)}</small>`:''}</td><td><span class="stay-status ${state==='Pendiente'?'pending':''}">${state}</span></td><td>${esc(d.actorName||'Sin registrar')}</td></tr>`).join('')||'<tr><td colspan="5" class="stay-empty">No hay descuentos registrados en esta cuenta.</td></tr>'}</tbody></table></div>`;
+ }
+ return `<div class="stay-head"><div><h1>Descuentos de Estadías</h1><p>${esc(a.id)} · ${esc(a.name)}</p></div><button class="btn" type="button" data-nav="home">Volver</button></div>
+ <nav class="stay-tabs" aria-label="Opciones de descuentos">${tabs.map(([key,label])=>`<button type="button" class="${key===stayTab?'active':''}" aria-pressed="${key===stayTab}" data-stay-tab="${key}">${label}</button>`).join('')}</nav>
+ <section class="panel stay-card" aria-labelledby="stayTitle"><h2 id="stayTitle">${heading}</h2>${inside}</section>`;
+}
+function bindStayDiscounts(){
+ const form=$('#stayRegistration');
+ $('#stayPageSize')?.addEventListener('change',e=>{stayPageSize=+e.target.value;stayPage=1;renderView();$('#stayPageSize')?.focus();});
+ if(!form)return;
+ const capture=()=>Object.fromEntries(new FormData(form));
+ const rerender=field=>{renderView();$('#stayRegistration')?.elements.namedItem(field)?.focus();};
+ bindStayParkingPicker(form,capture,rerender);
+ form.addEventListener('change',e=>{
+  if(!['parking','zone','benefit'].includes(e.target.name))return;
+  stayDraft=capture();
+  if(e.target.name==='parking'){stayDraft.zone='';stayDraft.benefit='';}
+  if(e.target.name==='zone')stayDraft.benefit='';
+  rerender(e.target.name);
+ });
+ form.addEventListener('input',e=>{if(e.target.name==='note')stayDraft.note=e.target.value;});
+ form.addEventListener('submit',e=>{
+  e.preventDefault();
+  if(!activeAllowed()||!form.reportValidity())return;
+  const a=current(),v=capture(),p=stayExtras.find(x=>x.id===v.parking),benefit=stayOptions(p).find(([id])=>id===v.benefit)?.[1];
+  if(!p||!p.zones.includes(v.zone)||!benefit){showToast('Selecciona un parqueadero, una zona y un descuento.');return;}
+  let saved=false;
+  confirmChange('Registrar descuento',`<p>${esc(benefit)} · ${esc(p.name)} · ${esc(v.zone)}.</p><p class="small muted">Quedará pendiente en el prototipo. No mueve el saldo ni modifica una estadía.</p>`,()=>{
+   if(saved||a!==current()||a.state!=='Activa')return;
+   saved=true;
+   const record={operationId:'DS-DEMO-'+(++sequence),date:now(),parking:p.name,zone:v.zone,benefit,note:String(v.note||'').trim(),actorName:loggedInAdmin.name};
+   (a.stayReservations??=[]).push(record);
+   audit('Registro de descuento pendiente',JSON.stringify(record));stayDraft={};stayTab='history';closeModal();refresh();showToast('Descuento registrado como pendiente. El saldo no cambió.');
+  },{label:'Registrar descuento'});
+ });
+}
+document.addEventListener('click',e=>{
+ if(view!=='discounts')return;
+ const tab=e.target.closest('[data-stay-tab]'),step=e.target.closest('[data-stay-step]');
+ if(tab){stayTab=tab.dataset.stayTab;stayPage=1;renderView();$(`[data-stay-tab="${stayTab}"]`)?.focus();}
+ if(step&&!step.disabled){stayPage+=+step.dataset.stayStep;renderView();$('[data-stay-step]')?.focus();}
+});
+
 $('#searchForm').addEventListener('submit',doSearch);$('#menuToggle').onclick=()=>{const open=$('#sidebar').classList.toggle('open');$('#shade').classList.toggle('open',open);$('#menuToggle').setAttribute('aria-expanded',String(open));};$('#shade').onclick=closeMenu;$('#modal').addEventListener('close',()=>cashDraft=null);icons();renderNav();
 $('#openAccounts').onclick=()=>{go('search');location.hash='cuentas';$('#query').focus({preventScroll:true});};
 $('#returnModules').onclick=()=>{showModule(false);location.hash='inicio';$('#openAccounts').focus({preventScroll:true});};
@@ -1254,7 +1480,7 @@ document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener
   </form>
   <section class="promo-form" id="benefitsList" aria-labelledby="benefitsListTitle" hidden>
    <div class="benefits-list-head"><h2 id="benefitsListTitle" tabindex="-1">Listado de beneficios</h2><div class="benefits-list-actions"><button type="button" class="btn" id="benefitsReturnEditor">Volver al formulario</button><button type="button" class="btn primary" id="benefitsNew">Nuevo beneficio</button></div></div>
-   <div id="benefitsListRows"></div><p class="promo-demo-note">Solo se muestran los beneficios guardados en esta simulación. Se conservan al cambiar de módulo y se eliminan al recargar la página.</p>
+   <div id="benefitsListRows"></div><p class="promo-demo-note">Los beneficios marcados «Ejemplo» son ficticios. Los cambios se conservan al cambiar de módulo y se reinician al recargar la página.</p>
   </section>
  </div>
 </main>
@@ -1262,9 +1488,29 @@ document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener
 (()=>{
  const q=s=>document.querySelector(s),form=q('#benefitsForm'),screen=q('#benefitsScreen'),benefits=[];
  let imageURL='',imageName='',imageVersion=0,imageReady=false,imageLoading=false,editId=null,nextId=1,pendingBenefit=null,pendingAction=null,dirty=false;
- const today=()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');};
+ const dateAt=offset=>{const d=new Date();d.setDate(d.getDate()+offset);return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');};
+ const today=()=>dateAt(0);
+ const exampleImage=({color,ink,label,icon})=>{
+  const symbols={
+   car:'<path d="M15 53l7-22h49l8 22M10 55q0-7 7-7h60q7 0 7 7v24h-8v-8H18v8h-8zM22 59h7m36 0h7"/>',
+   cup:'<path d="M17 32h52v24a17 17 0 0 1-17 17H34a17 17 0 0 1-17-17zm52 5h7a10 10 0 1 1 0 20h-7M11 80h68M31 14v9m14-11v9m14-7v9"/>',
+   gift:'<path d="M13 42h68v13H13zM19 55v25h56V55M47 42v38M47 42H32a10 10 0 1 1 9-14zm0 0h15a10 10 0 1 0-9-14z"/>',
+   clock:'<circle cx="47" cy="48" r="32"/><path d="M47 27v22l15 10"/>',
+   ticket:'<path d="M13 29h68v13a7 7 0 0 0 0 14v13H13V56a7 7 0 0 0 0-14zm45 0v9m0 6v9m0 6v10"/>'
+  };
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="480" viewBox="0 0 900 480"><rect width="900" height="480" fill="${color}"/><circle cx="775" cy="80" r="125" fill="#fff" opacity=".18"/><circle cx="827" cy="400" r="175" fill="#fff" opacity=".18"/><rect x="490" y="117" width="265" height="248" rx="40" fill="#fff" opacity=".55"/><g transform="translate(520 140) scale(2.1)" fill="none" stroke="${ink}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">${symbols[icon]}</g><text x="75" y="172" font-family="sans-serif" font-size="30" font-weight="700" letter-spacing="3" fill="${ink}">IGOR · BENEFICIOS</text><text x="75" y="264" font-family="sans-serif" font-size="48" font-weight="700" fill="${ink}">${label}</text><text x="75" y="316" font-family="sans-serif" font-size="26" fill="${ink}">EJEMPLO</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+ };
+ const exampleBenefits=[
+  {title:'Bienvenida IGOR',description:'Descubre un beneficio de bienvenida en parqueaderos participantes.',start:-12,end:30,active:true,code:'DEMO-IGOR20',link:'https://beneficios.example.com/bienvenida',color:'#f8c9dd',ink:'#77204a',label:'Bienvenida',icon:'car'},
+  {title:'Café para tu camino',description:'Presenta el código en la cafetería participante. Ejemplo sin enlace.',start:-7,end:2,active:true,code:'DEMO-CAFE',color:'#ffe5b5',ink:'#653b12',label:'Café',icon:'cup'},
+  {title:'Beneficio de fin de semana',description:'Abre el enlace para consultar los establecimientos participantes. Ejemplo sin código.',start:6,end:20,active:true,link:'https://beneficios.example.com/fin-de-semana',color:'#d9d2f8',ink:'#422779',label:'Fin de semana',icon:'gift'},
+  {title:'Pausa de temporada',description:'Ejemplo de beneficio desactivado manualmente, aunque tiene fechas vigentes.',start:-9,end:18,active:false,color:'#d9e8f6',ink:'#23416b',label:'En pausa',icon:'clock'},
+  {title:'Especial de temporada',description:'Promoción de ejemplo cuya vigencia ya terminó.',start:-40,end:-8,active:true,color:'#cceae1',ink:'#1e5646',label:'Especial',icon:'ticket'}
+ ].map(b=>({id:nextId++,example:true,title:b.title,description:b.description,start:dateAt(b.start),end:dateAt(b.end),active:b.active,code:b.code||'',codeEnabled:!!b.code,link:b.link||'',linkEnabled:!!b.link,image:exampleImage(b),imageName:b.title+' · imagen de ejemplo'}));
+ benefits.push(...exampleBenefits);
  const validDate=value=>/^\d{4}-\d{2}-\d{2}$/.test(value)&&!Number.isNaN(new Date(value+'T00:00:00Z').getTime())&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
- const statusOf=b=>!b.active?'Inactivo':today()<b.start?'Programado':today()>b.end?'Vencido':'Activo y vigente';
+ const statusOf=b=>!b.active?'Inactivo':today()<b.start?'Programado':today()>b.end?'Vencido':b.example&&b.end<=dateAt(3)?'Próximo a expirar':'Activo y vigente';
  const visibility=()=>{const start=q('#benefitsStart').value,end=q('#benefitsEnd').value,active=q('#benefitsActive').checked;const live=active&&validDate(start)&&validDate(end)&&start<=today()&&end>=today();q('#benefitsVisibility').classList.toggle('is-live',live);q('#benefitsVisibility').textContent=!active?'Inactivo: no se mostraría en la app.':!start||!end?'Completa las fechas para estimar la vigencia.':!validDate(start)||!validDate(end)||end<start?'Revisa las fechas de vigencia.':today()<start?'Programado: se mostraría desde la fecha de inicio.':today()>end?'Vencido: ya no se mostraría en la app.':'Activo y vigente: se mostraría en la app.';};
  const changed=()=>{dirty=true;q('#benefitsSaved').hidden=true;q('#benefitsError').hidden=true;};
  const error=(message,field)=>{q('#benefitsError').textContent=message;q('#benefitsError').hidden=false;field.focus();};
@@ -1272,13 +1518,13 @@ document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener
  const renderLink=()=>{const enabled=q('#benefitsLinkEnabled').checked,link=q('#benefitsLink').value.trim();q('#benefitsLink').disabled=!enabled;q('#benefitsLink').required=enabled;q('#benefitsPreviewLink').hidden=!enabled||!link;q('#benefitsPreviewLink').textContent=link;};
  const renderPreview=()=>{const title=q('#benefitsName').value.trim();q('#benefitsPreviewTitle').textContent=title;q('#benefitsPreviewTitle').hidden=!title;q('#benefitsPreviewDescription').textContent=q('#benefitsDescription').value.trim()||'Descripción del beneficio';q('#benefitsPreviewImage').hidden=!imageReady;q('#benefitsImagePlaceholder').hidden=imageReady;if(imageReady)q('#benefitsPreviewImage').src=imageURL;else q('#benefitsPreviewImage').removeAttribute('src');q('#benefitsImageName').textContent=imageName?'Imagen seleccionada: '+imageName:'';visibility();renderLink();renderCode();};
  const showEditor=()=>{q('#benefitsList').hidden=true;form.hidden=false;q('#benefitsTitle').focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});};
- const renderList=()=>{q('#benefitsListRows').innerHTML=benefits.length?benefits.map(b=>`<article class="benefits-list-row" data-benefit-row="${b.id}"><img src="${esc(b.image)}" alt=""><div><h3>${esc(b.title)}</h3><div class="tag-row"><span class="badge ${statusOf(b)==='Activo y vigente'?'green':b.active?'amber':''}">${statusOf(b)}</span><span class="meta">${esc(b.start)} → ${esc(b.end)}</span></div><p>Código Promocional: ${b.codeEnabled?esc(b.code):'Deshabilitado'} · Enlace: ${b.linkEnabled?'Habilitado':'Deshabilitado'}</p></div><button type="button" class="btn" data-benefit-edit="${b.id}" aria-label="Editar ${esc(b.title)}">Editar</button></article>`).join(''):'<div class="benefits-list-empty"><h3>No hay beneficios guardados</h3><p>Completa el formulario y confirma el guardado para verlos aquí.</p></div>';};
+ const renderList=()=>{q('#benefitsListRows').innerHTML=benefits.length?benefits.map(b=>`<article class="benefits-list-row" data-benefit-row="${b.id}"><img src="${esc(b.image)}" alt=""><div><h3>${esc(b.title)}</h3><div class="tag-row">${b.example?'<span class="badge">Ejemplo</span>':''}<span class="badge ${statusOf(b)==='Activo y vigente'?'green':b.active?'amber':''}">${statusOf(b)}</span><span class="meta">${esc(b.start)} → ${esc(b.end)}</span></div><p>Código Promocional: ${b.codeEnabled?esc(b.code):'Deshabilitado'} · Enlace: ${b.linkEnabled?'Habilitado':'Deshabilitado'}</p></div><button type="button" class="btn" data-benefit-edit="${b.id}" aria-label="Editar ${esc(b.title)}">Editar</button></article>`).join(''):'<div class="benefits-list-empty"><h3>No hay beneficios guardados</h3><p>Completa el formulario y confirma el guardado para verlos aquí.</p></div>';};
  const showList=()=>{renderList();form.hidden=true;q('#benefitsList').hidden=false;q('#benefitsListTitle').focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});};
  const loadBenefit=b=>{imageVersion++;imageLoading=false;pendingBenefit=null;form.reset();editId=b?.id??null;imageURL=b?.image||'';imageName=b?.imageName||'';imageReady=!!imageURL;for(const [id,key]of [['benefitsName','title'],['benefitsDescription','description'],['benefitsStart','start'],['benefitsEnd','end'],['benefitsLink','link'],['benefitsCode','code']])q('#'+id).value=b?.[key]||'';q('#benefitsActive').checked=b?b.active:true;q('#benefitsLinkEnabled').checked=b?b.linkEnabled:true;q('#benefitsCodeEnabled').checked=!!b?.codeEnabled;q('#benefitsSave').textContent=b?'Guardar cambios':'Guardar beneficio';q('#benefitsSaved').hidden=true;q('#benefitsError').hidden=true;dirty=false;renderPreview();showEditor();};
  const changeEditor=action=>{if(!dirty&&!imageLoading){action();return;}pendingAction=action;modal('¿Descartar cambios del formulario?','<p>Los cambios sin guardar se perderán. Los beneficios ya guardados se conservarán.</p><div class="form-actions"><button type="button" class="btn" data-benefits-cancel>Seguir editando</button><button type="button" class="btn primary" data-benefits-discard>Descartar cambios</button></div>','Beneficios app');};
  const originalShowModule=showModule;
- showModule=function(accountsOpen){originalShowModule(accountsOpen);const active=demoSignedIn&&location.hash==='#beneficios';screen.hidden=!active;if(active){q('#moduleHome').hidden=true;q('#supportApp').hidden=true;q('#promoScreen').hidden=true;document.title='IGOR · Gestión de beneficios app';}else if(!demoSignedIn){q('#promoScreen').hidden=true;}};
- q('#openBenefits').onclick=()=>{if(!demoSignedIn)return;location.hash='beneficios';showModule(false);q('#benefitsTitle').focus({preventScroll:true});};
+ showModule=function(accountsOpen){const entering=screen.hidden;originalShowModule(accountsOpen);const active=demoSignedIn&&location.hash==='#beneficios';screen.hidden=!active;if(active){q('#moduleHome').hidden=true;q('#supportApp').hidden=true;q('#promoScreen').hidden=true;document.title='IGOR · Gestión de beneficios app';if(entering&&!dirty&&!imageLoading)showList();}else if(!demoSignedIn){q('#promoScreen').hidden=true;}};
+ q('#openBenefits').onclick=()=>{if(!demoSignedIn)return;location.hash='beneficios';showModule(false);q(form.hidden?'#benefitsListTitle':'#benefitsTitle').focus({preventScroll:true});};
  q('#benefitsBack').onclick=()=>{closeModal();location.hash='inicio';showModule(false);q('#openBenefits').focus({preventScroll:true});};
  window.addEventListener('hashchange',()=>{if(q('#modal').open&&q('#modalBody').querySelector('[data-benefits-confirm],[data-benefits-discard]')){pendingBenefit=null;pendingAction=null;closeModal();}});
  q('#modal').addEventListener('close',()=>{pendingBenefit=null;pendingAction=null;});
@@ -1290,7 +1536,7 @@ document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener
  form.onsubmit=e=>{e.preventDefault();q('#benefitsError').hidden=true;pendingBenefit=null;if(imageLoading)return error('Espera a que termine de cargar la imagen.',q('#benefitsImage'));if(!imageReady)return error('Selecciona una imagen para el beneficio.',q('#benefitsImage'));const title=q('#benefitsName').value.trim(),description=q('#benefitsDescription').value.trim(),start=q('#benefitsStart').value,end=q('#benefitsEnd').value,link=q('#benefitsLink').value.trim(),linkEnabled=q('#benefitsLinkEnabled').checked,code=q('#benefitsCode').value.trim(),codeEnabled=q('#benefitsCodeEnabled').checked;if(!title)return error('Ingresa el título del beneficio.',q('#benefitsName'));if(!description)return error('Ingresa la descripción del beneficio.',q('#benefitsDescription'));if(!validDate(start))return error('Selecciona una fecha de inicio válida.',q('#benefitsStart'));if(!validDate(end))return error('Selecciona una fecha de fin válida.',q('#benefitsEnd'));if(end<start)return error('La fecha de fin debe ser igual o posterior a la fecha de inicio.',q('#benefitsEnd'));if(linkEnabled){let url;try{url=new URL(link);}catch{}if(!url||!['http:','https:'].includes(url.protocol))return error('Ingresa un enlace válido que empiece con https:// o http://, o deshabilita el enlace.',q('#benefitsLink'));}if(codeEnabled&&!code)return error('Ingresa el código promocional o deshabilita la opción.',q('#benefitsCode'));pendingBenefit={id:editId||nextId,title,description,start,end,active:q('#benefitsActive').checked,image:imageURL,imageName,link,linkEnabled,code,codeEnabled};modal('Confirmar beneficio','<img class="benefits-confirm-image" src="'+esc(imageURL)+'" alt="Vista previa del beneficio">'+dataValues([['Título',title],['Descripción',description],['Fecha de inicio',start],['Fecha de fin',end],['Estado',pendingBenefit.active?'Activo':'Inactivo'],['Enlace',linkEnabled?link:'Deshabilitado'],['Código Promocional',codeEnabled?code:'Deshabilitado']])+'<p class="promo-demo-note">Se guardará únicamente en esta simulación. No se publicará en la app ni se validará el código promocional.</p><div class="form-actions"><button type="button" class="btn" data-benefits-cancel>Cancelar</button><button type="button" class="btn primary" data-benefits-confirm>Confirmar guardado</button></div>','Beneficios app');};
  q('#benefitsViewList').onclick=showList;q('#benefitsReturnEditor').onclick=showEditor;q('#benefitsNew').onclick=()=>changeEditor(()=>loadBenefit(null));
  q('#benefitsListRows').onclick=e=>{const button=e.target.closest('[data-benefit-edit]');if(!button)return;const b=benefits.find(x=>x.id===Number(button.dataset.benefitEdit));if(b)changeEditor(()=>loadBenefit(b));};
- document.addEventListener('click',e=>{if(e.target.closest('[data-benefits-cancel]')){pendingBenefit=null;pendingAction=null;closeModal();if(!form.hidden)q('#benefitsSave').focus();}if(e.target.closest('[data-benefits-discard]')&&pendingAction){const action=pendingAction;pendingAction=null;closeModal();action();}if(e.target.closest('[data-benefits-confirm]')&&pendingBenefit){const b={...pendingBenefit};pendingBenefit=null;const index=benefits.findIndex(x=>x.id===b.id);if(index<0){benefits.push(b);nextId++;}else benefits[index]=b;editId=b.id;dirty=false;closeModal();q('#benefitsSaved').textContent='Beneficio guardado en esta simulación.';q('#benefitsSaved').hidden=false;q('#benefitsSave').textContent='Guardar cambios';q('#benefitsSave').focus();}});
+ document.addEventListener('click',e=>{if(e.target.closest('[data-benefits-cancel]')){pendingBenefit=null;pendingAction=null;closeModal();if(!form.hidden)q('#benefitsSave').focus();}if(e.target.closest('[data-benefits-discard]')&&pendingAction){const action=pendingAction;pendingAction=null;closeModal();action();}if(e.target.closest('[data-benefits-confirm]')&&pendingBenefit){const b={...pendingBenefit};pendingBenefit=null;const index=benefits.findIndex(x=>x.id===b.id);if(index<0){benefits.push(b);nextId++;}else benefits[index]={...benefits[index],...b};editId=b.id;dirty=false;closeModal();q('#benefitsSaved').textContent='Beneficio guardado en esta simulación.';q('#benefitsSaved').hidden=false;q('#benefitsSave').textContent='Guardar cambios';q('#benefitsSave').focus();}});
  renderPreview();showModule(location.hash==='#cuentas');
 })();
 </script>
@@ -1301,6 +1547,12 @@ document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener
 .promo-code-status{display:inline-block;border-radius:999px;padding:4px 10px;font-size:13px;font-weight:700;line-height:1.5;background:#f1f5f9;color:#334155}
 .promo-code-status--used{color:#991b1b;background:#fee2e2}
 .promo-code-status--available{color:#166534;background:#dcfce7}
+.promo-code-filters{display:grid;grid-template-columns:minmax(150px,225px) minmax(220px,1fr);gap:16px;align-items:start;margin-top:20px;max-width:730px}
+.promo-code-prefix-controls{display:flex;align-items:stretch;gap:8px}
+.promo-code-prefix-controls input{min-width:0;flex:1}
+.promo-code-prefix-controls button{white-space:nowrap;min-height:0;padding:8px 12px}
+.promo-code-filter-note{margin-top:10px}
+@media(max-width:650px){.promo-code-filters{grid-template-columns:minmax(0,1fr);gap:12px}}
 </style>
 <script>
 // Frontend-only promotional batches. BigInt ranges avoid allocating huge code lists.
@@ -1332,26 +1584,53 @@ document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener
  const usageCsv=rows=>'\uFEFF'+[['Código','Promoción','Tipo','Fecha de uso','ID del usuario','Nombre del usuario','Cuenta beneficiaria','Canal','Saldo por código','Estado actual del código','Origen'],...rows.map(row=>[row.code,row.batch.name,row.batch.type,row.date||'Sin fecha registrada',row.user.userId||'Sin registrar',row.user.userName||'Sin registrar',row.user.accountId||'Sin registrar',row.user.channel||'Sin registrar',row.batch.value,usageStatus(row),row.batch.example?'Ejemplo ficticio':'Simulación'])].map(row=>row.map(csvUsageCell).join(';')).join('\r\n');
  q('#promoUsageDownload').onclick=()=>{if(!applyUsageFilters())return;const rows=filteredUsage();if(rows.length)download(usageCsv(rows),'historial_canjes_'+(usageFrom||'inicio')+'_'+(usageTo||'fin')+'.csv','text/csv;charset=utf-8');};
 
- // Keep ranges compact: a batch may contain more codes than Number can safely represent.
+ // Keep ranges compact: match the numeric suffix by decimal intervals, not by enumerating codes.
+ const promoPrefixQuery=()=>q('#promoPrefixFilter').value.trim().toLocaleLowerCase('es');
+ const prefixRanges=(batch,query)=>{
+  const prefix=batch.prefix.toLocaleLowerCase('es'),end=batch.first+batch.quantity;
+  if(prefix.startsWith(query))return [{first:0n,end:batch.quantity}];
+  if(!query.startsWith(prefix))return [];
+  const leadingDigits=query.slice(prefix.length);
+  if(!/^[1-9][0-9]*$/.test(leadingDigits)||leadingDigits.length>(end-1n).toString().length)return [];
+  const ranges=[];
+  for(let lo=BigInt(leadingDigits),hi=lo+1n;lo<end;lo*=10n,hi*=10n){
+   const first=lo>batch.first?lo:batch.first,last=hi<end?hi:end;
+   if(first<last)ranges.push({first:first-batch.first,end:last-batch.first});
+  }
+  return ranges;
+ };
  const filteredCodes=()=>{
-  const filter=q('#promoStatusFilter').value,target=filter==='used'?'Utilizado':'Disponible',ranges=[];let count=0n,base=0n;
-  const add=(first,quantity)=>{if(quantity>0n){ranges.push({first,quantity});count+=quantity;}};
+  const filter=q('#promoStatusFilter').value,target=filter==='used'?'Utilizado':'Disponible',query=promoPrefixQuery(),ranges=[];let count=0n,base=0n;
   for(const batch of batches){
-   if(filter==='all'){add(base,batch.quantity);base+=batch.quantity;continue;}
-   const baseStatus=statusOf(batch,0),exceptions=[];
-   for(const [key,users]of batch.redemptions||[]){
-    if(!/^[0-9]+$/.test(key))continue;
-    const offset=BigInt(key);
-    if(offset<batch.quantity&&statusOf(batch,users.length)!==baseStatus)exceptions.push(offset);
+   const matches=prefixRanges(batch,query);
+   const baseStatus=statusOf(batch,0);let matchIndex=0;
+   const add=(first,end)=>{
+    if(first>=end)return;
+    while(matchIndex<matches.length&&matches[matchIndex].end<=first)matchIndex++;
+    for(let i=matchIndex;i<matches.length&&matches[i].first<end;i++){
+     const match=matches[i],overlapFirst=first>match.first?first:match.first,overlapEnd=end<match.end?end:match.end;
+     if(overlapFirst<overlapEnd){const quantity=overlapEnd-overlapFirst;ranges.push({first:base+overlapFirst,quantity});count+=quantity;}
+    }
+   };
+   if(matches.length){
+    if(filter==='all')add(0n,batch.quantity);
+    else{
+     const exceptions=[];
+     for(const [key,users]of batch.redemptions||[]){
+      if(!/^[0-9]+$/.test(key))continue;
+      const offset=BigInt(key),state=statusOf(batch,users.length);
+      if(offset<batch.quantity&&state!==baseStatus)exceptions.push({offset,state});
+     }
+     exceptions.sort((a,b)=>a.offset<b.offset?-1:a.offset>b.offset?1:0);
+     let cursor=0n;
+     for(const {offset,state}of exceptions){
+      if(baseStatus===target)add(cursor,offset);
+      if(state===target)add(offset,offset+1n);
+      cursor=offset+1n;
+     }
+     if(baseStatus===target)add(cursor,batch.quantity);
+    }
    }
-   exceptions.sort((a,b)=>a<b?-1:a>b?1:0);
-   let cursor=0n;
-   for(const offset of exceptions){
-    if(baseStatus===target)add(base+cursor,offset-cursor);
-    if(statusOf(batch,redemptionsOf(batch,offset).length)===target)add(base+offset,1n);
-    cursor=offset+1n;
-   }
-   if(baseStatus===target)add(base+cursor,batch.quantity-cursor);
    base+=batch.quantity;
   }
   return {ranges,count};
@@ -1369,11 +1648,14 @@ document.querySelectorAll('[data-mode]').forEach(button=>button.addEventListener
    }
    skip=0n;if(shown===pageSize)break;
   }
-  q('#promoRows').innerHTML=html||'<tr><td colspan="7"><div class="empty"><h3>No hay códigos que coincidan con este estado</h3><p>Selecciona Todos para ver los códigos generados.</p></div></td></tr>';
-  q('#promoCount').textContent=count?'Mostrando '+(first+1n)+'–'+last+' de '+count+' códigos. Página '+(page+1n)+' de '+pages+'.':'0 códigos que coinciden con el estado seleccionado.';
+  q('#promoRows').innerHTML=html||'<tr><td colspan="7"><div class="empty"><h3>No hay códigos que coincidan con los filtros</h3><p>Cambia el estado o modifica el prefijo de búsqueda.</p></div></td></tr>';
+  q('#promoCount').textContent=count?'Mostrando '+(first+1n)+'–'+last+' de '+count+' códigos. Página '+(page+1n)+' de '+pages+'.':'0 códigos que coinciden con los filtros.';
   q('#promoPrevious').disabled=page===0n;q('#promoNext').disabled=!count||last===count;
  };
- q('#promoStatusFilter').onchange=()=>{page=0n;render();};
+ const resetCodePage=()=>{page=0n;q('#promoPrefixFilterClear').disabled=!q('#promoPrefixFilter').value;render();};
+ q('#promoStatusFilter').onchange=resetCodePage;
+ q('#promoPrefixFilter').oninput=resetCodePage;
+ q('#promoPrefixFilterClear').onclick=()=>{q('#promoPrefixFilter').value='';resetCodePage();q('#promoPrefixFilter').focus();};
  q('#promoPrevious').onclick=()=>{if(page>0n){page--;render();}};q('#promoNext').onclick=()=>{if((page+1n)*pageSize<filteredCodes().count){page++;render();}};
  q('#openPromoCodes').onclick=()=>{if(!demoSignedIn)return;q('#moduleHome').hidden=true;q('#promoScreen').hidden=false;window.scrollTo({top:0,behavior:'instant'});render();q('#promoName').focus();};
  q('#promoBack').onclick=()=>{pending=null;closeModal();q('#promoScreen').hidden=true;q('#moduleHome').hidden=false;q('#moduleHomeTitle').focus({preventScroll:true});};
